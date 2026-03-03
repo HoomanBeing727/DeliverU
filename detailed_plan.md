@@ -150,26 +150,63 @@ The app features:
 
 ## 💳 6. Payment and Escrow System
 
-**Purpose:** Ensure transparent, safe, and fair transactions between Orderers and Deliverers.
+**Purpose:** Ensure transparent, safe, and fair transactions between Orderers and Deliverers — while minimizing costs and legal complexity.
 
-### Payment Flow
-1. Orderer pays when creating the order.  
+---
+
+### Option A — Traditional Payment + Escrow (Default Mode)
+
+**Purpose:** Provide a standard money-based payment structure for users who prefer direct financial transactions.
+
+#### Payment Flow
+1. **Orderer pays** when creating the order.  
    (Payment is held in **escrow**.)
-2. When deliverer accepts, they pay for the order at pickup point.
-3. Upon delivery confirmation:
-   - **Escrow releases** full order price + **tip** to deliverer.
-4. If no deliverer accepts within 30 min → auto refund to Orderer.
+2. When a **Deliverer accepts**, they **pay upfront** for the order at pickup point.
+3. Upon successful delivery and confirmation:
+   - **Escrow releases** the full order price + **tip** to Deliverer.
+4. If no deliverer accepts within 30 minutes → **auto refund** to Orderer.
 
-### Tip Formula
+#### Tip Formula
 \[
 \text{Tip} = (\text{Order Price} \times 10\%) + C \times \text{Distance}
 \]
-> where \( C \) is a constant value determined later.  
+> where \( C \) is a constant determined by distance multiplier.  
 Values are rounded to avoid decimals.
 
-### Platform Fee
+#### Platform Fee
+A small **platform fee** (around $0.5–$1.0) is deducted per order to cover operational costs (e.g., payment SDK charges and server fees).
 
-We will charge a **small platform fee** (around $0.5 - $1.0) to cover operational costs from each order, deducted from the user’s payout.
+---
+
+### Option B — Campus Credit System (Alternative Mode)
+
+**Purpose:** Eliminate payment gateway dependency and reduce legal and financial risk by using a **non-monetary exchange system**.
+
+#### Concept Overview
+- Introduce an **internal credit currency**, named **DeliverU Credits** (DC).
+- **1 delivery = +1 DC**
+- **1 order = −1 DC**
+
+This means students **earn credits** by delivering others’ orders and **spend credits** when using the app to have food delivered to them.
+
+#### Credit Rules
+| Action | Credit Change | Description |
+|--------|----------------|-------------|
+| Deliver successfully | +1 DC | Earn one credit for completing a delivery |
+| Place an order | −1 DC | Spend one credit to have a delivery fulfilled |
+| Cancel order (before acceptance) | 0 | No credit consumed |
+| Order canceled (after acceptance) | Refunds DC to orderer (upon confirmation) |
+
+#### Advantages
+- 💸 **No payment processor fees** (no Alipay / WeChat cost)  
+- ⚖️ **No real money handled by platform**, minimizing **legal liability**  
+- 🔁 **Self-sustaining ecosystem** — encourages active participation  
+- 📉 **Reduced barrier to entry** for students (no bank setup needed)
+
+#### Additional Features
+- Optional **credit trading** or **bonus credits** for frequent users.  
+- Admins can **manually distribute credits** during system startup or promotions.  
+- In future, credits can be **tokenized or integrated** into scholarship/reward systems if required.
 
 ---
 
