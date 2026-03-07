@@ -11,6 +11,7 @@ from services.order_service import (
     create_order,
     get_user_orders,
     get_deliverer_queue,
+    get_deliverer_orders,
     accept_order,
     pickup_order,
     deliver_order,
@@ -107,6 +108,17 @@ async def get_order_queue(
     for order in orders:
         responses.append(await _get_order_response(db, order))
     return responses
+@router.get("/my-deliveries", response_model=list[OrderResponse])
+async def get_my_deliveries(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get orders where current user is the deliverer (accepted/picked_up)."""
+    orders = await get_deliverer_orders(db, str(user.id))
+    responses = []
+    for order in orders:
+        responses.append(await _get_order_response(db, order))
+    return responses
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
@@ -123,12 +135,43 @@ async def get_order_detail(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
         )
-    if order.orderer_id != str(user.id) and order.deliverer_id != str(user.id):
+    # Allow any authenticated user to view pending orders (for browsing)
+
+    # Non-pending orders require orderer/deliverer role
+
+    is_orderer = order.orderer_id == str(user.id)
+
+    is_deliverer = order.deliverer_id is not None and order.deliverer_id == str(user.id)
+
+    if not is_orderer and not is_deliverer and order.status != "pending":
+
         raise HTTPException(
+
             status_code=status.HTTP_403_FORBIDDEN,
+
             detail="You can only view your own orders",
+
         )
-    return await _get_order_response(db, order)
+
+    
+
+    # Get the full order response
+
+    response = await _get_order_response(db, order)
+
+    
+
+    # Redact QR fields for non-orderer viewers of pending orders
+
+    if not is_orderer:
+
+        response.qr_code_image = None
+
+        response.qr_code_data = None
+
+    
+
+    return response
 
 
 @router.patch("/{order_id}/accept", response_model=OrderResponse)
