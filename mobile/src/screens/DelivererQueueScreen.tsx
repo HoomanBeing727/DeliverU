@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
@@ -17,9 +17,51 @@ export default function DelivererQueueScreen({ navigation }: Props) {
     ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460' }
     : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366' };
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+const [orders, setOrders] = useState<Order[]>([]);
+const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [sortMode, setSortMode] = useState<'preference' | 'time'>('preference');
+
+  const sortedOrders = useMemo(() => {
+    if (orders.length === 0) return [];
+
+    // By Time: Earliest created first (ascending)
+    if (sortMode === 'time') {
+      return [...orders].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    }
+
+    // By Preference
+    const prefs = user?.preferred_delivery_halls;
+
+    // Null-safe check: if no prefs, behave like "By Time"
+    if (!prefs || prefs.length === 0) {
+      return [...orders].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    }
+
+    return [...orders].sort((a, b) => {
+      const indexA = prefs.indexOf(a.delivery_hall);
+      const indexB = prefs.indexOf(b.delivery_hall);
+
+      const hasA = indexA !== -1;
+      const hasB = indexB !== -1;
+
+      // Both in prefs: lower index = higher priority (earlier in array)
+      if (hasA && hasB) {
+        if (indexA !== indexB) return indexA - indexB;
+        // Same priority tier: sort by time
+        return a.created_at.localeCompare(b.created_at);
+      }
+
+      // Only A in prefs: A comes first
+      if (hasA) return -1;
+      
+      // Only B in prefs: B comes first
+      if (hasB) return 1;
+
+      // Neither in prefs: sort by time
+      return a.created_at.localeCompare(b.created_at);
+    });
+  }, [orders, sortMode, user?.preferred_delivery_halls]);
 
   async function loadOrders() {
     try {
@@ -61,7 +103,46 @@ export default function DelivererQueueScreen({ navigation }: Props) {
         <View style={{ width: 32 }} />
       </View>
 
-      {orders.length === 0 ? (
+      {/* Sort Toggle */}
+      <View style={[styles.toggleContainer, { backgroundColor: isDark ? '#2a2a40' : '#e0e0e0' }]}>
+        <TouchableOpacity
+          style={[
+            styles.toggleBtn,
+            sortMode === 'preference' && { backgroundColor: colors.accent },
+          ]}
+          onPress={() => setSortMode('preference')}
+          activeOpacity={0.8}
+        >
+          <Text
+            style={[
+              styles.toggleText,
+              { color: sortMode === 'preference' ? '#fff' : colors.text },
+            ]}
+          >
+            By Preference
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.toggleBtn,
+            sortMode === 'time' && { backgroundColor: colors.accent },
+          ]}
+          onPress={() => setSortMode('time')}
+          activeOpacity={0.8}
+        >
+          <Text
+            style={[
+              styles.toggleText,
+              { color: sortMode === 'time' ? '#fff' : colors.text },
+            ]}
+          >
+            By Time
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {sortedOrders.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={[styles.emptyText, { color: colors.sub }]}>
             No orders available for delivery right now
@@ -69,7 +150,7 @@ export default function DelivererQueueScreen({ navigation }: Props) {
         </View>
       ) : (
         <FlatList
-          data={orders}
+          data={sortedOrders}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <OrderCard
@@ -115,6 +196,24 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    height: 44,
+    borderRadius: 25,
+    padding: 4,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  toggleBtn: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 22,
+  },
+  toggleText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   list: {
     padding: 16,
