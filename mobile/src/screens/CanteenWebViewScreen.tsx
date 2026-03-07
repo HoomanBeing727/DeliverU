@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types';
+import { OrderItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CanteenWebView'>;
@@ -26,6 +26,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [extractedItems, setExtractedItems] = useState<OrderItem[]>([]);
   const [extractedPrice, setExtractedPrice] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -42,6 +43,9 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
     price: number;
     debug?: string;
     url?: string;
+    items?: { name: string; qty: number; price: number }[];
+    cartTotal?: number;
+    totalPrice?: number;
   }
 
   function buildCaptureScript(): string {
@@ -450,11 +454,19 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
 
             if (qrUrl) {
               log('strategy url-extract success, posting URL to RN');
+              var extractedItems = [];
+              var cartTotal = 0;
+              if (window.__extractedCartItems) {
+                extractedItems = window.__extractedCartItems.items || [];
+                cartTotal = window.__extractedCartItems.totalPrice || 0;
+              }
               var urlMsg = JSON.stringify({
                 type: 'qr_url_result',
                 url: qrUrl,
                 image: null,
                 price: extractPrice(),
+                items: extractedItems,
+                cartTotal: cartTotal,
                 debug: debugLog.join(' | '),
               });
               if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
@@ -779,6 +791,11 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
         console.log('[QR URL Extract Debug]', msg.debug);
         console.log('[QR URL]', msg.url);
 
+        if (msg.items && typeof msg.cartTotal === 'number') {
+          setExtractedItems(msg.items);
+          setExtractedPrice(msg.cartTotal);
+        }
+
         // Clear the safety timeout since we received a response
         if (captureTimeoutRef.current) {
           clearTimeout(captureTimeoutRef.current);
@@ -810,7 +827,8 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
           .then((base64Image) => {
             console.log('[QR URL Fetch] Got base64, length:', base64Image.length);
             setCapturedImage(base64Image);
-            setExtractedPrice(msg.price || 0);
+            const resolvedPrice = typeof msg.cartTotal === 'number' ? msg.cartTotal : (msg.price || 0);
+            setExtractedPrice(resolvedPrice);
             setQrCodeImage(base64Image);
 
             setQrCodeData(null);
@@ -828,6 +846,15 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
             setCapturing(false);
           });
 
+        return;
+      }
+
+      if (msg.type === 'cart_items_extracted') {
+        const items = msg.items || [];
+        const totalPrice = msg.totalPrice || 0;
+        setExtractedItems(items);
+        setExtractedPrice(totalPrice);
+        console.log('[Cart Extract] Got items:', items.length);
         return;
       }
 
@@ -890,13 +917,14 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
   function handleRetry() {
     setShowPreview(false);
     setCapturedImage(null);
+    setExtractedItems([]);
     setExtractedPrice(0);
   }
 
   function handleConfirm() {
     setShowPreview(false);
     navigation.navigate('OrderConfirm', {
-      items: [],
+      items: extractedItems,
       totalPrice: extractedPrice,
       canteen,
       qrCodeImage: capturedImage,
@@ -927,6 +955,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
         source={{ uri: url }}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        injectedJavaScriptBeforeContentLoaded={buildCartExtractionScript()}
         startInLoadingState={true}
         renderLoading={() => (
           <ActivityIndicator 
