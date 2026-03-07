@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { decodeQR } from '../api/qr';
 import { RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,7 +26,6 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [decodedData, setDecodedData] = useState<string | null>(null);
   const [extractedPrice, setExtractedPrice] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -43,6 +41,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
     image: string | null;
     price: number;
     debug?: string;
+    url?: string;
   }
 
   function buildCaptureScript(): string {
@@ -420,6 +419,52 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
           }
 
           function tryCapture() {
+            // Strategy 0: Extract QR image URL directly (bypass CORS entirely)
+            log('trying strategy url-extract');
+            var selectors = [
+              'img[src*="barcode"]',
+              'img[src*="api.aigens.com"]',
+              'app-img img',
+              '.qr-scan-container img',
+              'img[src*="qr"]',
+            ];
+            var qrUrl = null;
+            for (var si = 0; si < selectors.length; si++) {
+              try {
+                var found = document.querySelectorAll(selectors[si]);
+                log('selector "' + selectors[si] + '" matched ' + found.length + ' elements');
+                for (var fi = 0; fi < found.length; fi++) {
+                  var el = found[fi];
+                  var src = el.getAttribute('src') || el.src || '';
+                  if (src && src.indexOf('http') === 0 && src.length > 20) {
+                    log('url-extract found: ' + shortUrl(src));
+                    qrUrl = src;
+                    break;
+                  }
+                }
+                if (qrUrl) break;
+              } catch (selErr) {
+                log('selector "' + selectors[si] + '" error: ' + (selErr && selErr.message ? selErr.message : String(selErr)));
+              }
+            }
+
+            if (qrUrl) {
+              log('strategy url-extract success, posting URL to RN');
+              var urlMsg = JSON.stringify({
+                type: 'qr_url_result',
+                url: qrUrl,
+                image: null,
+                price: extractPrice(),
+                debug: debugLog.join(' | '),
+              });
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(urlMsg);
+              }
+              return;
+            }
+            log('strategy url-extract failed: no matching URL found');
+
+            // Fallback: existing pixel-based strategies
             var canvasResult = findQrCanvas();
             if (canvasResult) {
               postResult(canvasResult);
@@ -516,9 +561,277 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
     `;
   }
 
+  function buildCartExtractionScript(): string {
+    return `
+      (function () {
+        try {
+          var LOG_PREFIX = '[CartExtract]';
+          var hasExtractedOnce = false;
+          var visibilityPollTimer = null;
+          var rescrapeInterval = null;
+          var cartObserver = null;
+          var bodyObserver = null;
+
+          function debug(msg) {
+            try {
+              console.log(LOG_PREFIX, msg);
+            } catch (_) {
+              // no-op
+            }
+          }
+
+          function parsePrice(text) {
+            var cleaned = String(text || '').replace('$', '').trim();
+            var value = parseFloat(cleaned);
+            if (isNaN(value)) {
+              return 0;
+            }
+            return value;
+          }
+
+          function parseQty(text) {
+            var value = parseInt(String(text || '').trim(), 10);
+            if (isNaN(value)) {
+              return 0;
+            }
+            return value;
+          }
+
+          function postCartData(payload) {
+            var safePayload = payload || { items: [], totalPrice: 0 };
+            try {
+              window.__extractedCartItems = safePayload;
+            } catch (storageError) {
+              debug('failed to store window.__extractedCartItems: ' + (storageError && storageError.message ? storageError.message : String(storageError)));
+            }
+
+            try {
+              if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                window.ReactNativeWebView.postMessage(
+                  JSON.stringify({
+                    type: 'cart_items_extracted',
+                    items: safePayload.items,
+                    totalPrice: safePayload.totalPrice,
+                  }),
+                );
+              }
+            } catch (postError) {
+              debug('postMessage failed: ' + (postError && postError.message ? postError.message : String(postError)));
+            }
+          }
+
+          function scrapeCart() {
+            try {
+              var wrappers = document.querySelectorAll('.cart-item-wrapper');
+              var items = [];
+
+              for (var i = 0; i < wrappers.length; i++) {
+                var wrapper = wrappers[i];
+                var rows = wrapper.querySelectorAll('.main-item-row.main-item, .main-item-row.sub-item');
+
+                for (var j = 0; j < rows.length; j++) {
+                  var row = rows[j];
+                  var qtyEl = row.querySelector('.div-item-qty h4.item-qty');
+                  var nameEl = row.querySelector('h4.item-name');
+                  var priceEl = row.querySelector('h6.main-item-price-extra');
+
+                  var qty = parseQty(qtyEl ? qtyEl.textContent : '');
+                  var name = nameEl ? String(nameEl.textContent || '').trim() : '';
+                  var price = parsePrice(priceEl ? priceEl.textContent : '');
+
+                  if (!name) {
+                    continue;
+                  }
+
+                  items.push({
+                    name: name,
+                    qty: qty,
+                    price: price,
+                  });
+                }
+              }
+
+              var totalNode = document.querySelector('.div-prices .col-right h5');
+              var totalPrice = parsePrice(totalNode ? totalNode.textContent : '');
+              var payload = {
+                items: items,
+                totalPrice: totalPrice,
+              };
+
+              debug('scraped items=' + items.length + ' totalPrice=' + totalPrice);
+              postCartData(payload);
+            } catch (scrapeError) {
+              debug('scrapeCart failed: ' + (scrapeError && scrapeError.message ? scrapeError.message : String(scrapeError)));
+              postCartData({ items: [], totalPrice: 0 });
+            }
+          }
+
+          function startRescrape() {
+            if (rescrapeInterval) {
+              return;
+            }
+            debug('start 2s re-poll while cart visible');
+            rescrapeInterval = setInterval(function () {
+              var cartPage = document.querySelector('app-mobile-cart-page');
+              if (!cartPage) {
+                if (rescrapeInterval) {
+                  clearInterval(rescrapeInterval);
+                  rescrapeInterval = null;
+                }
+                debug('cart hidden, stop 2s re-poll');
+                return;
+              }
+              scrapeCart();
+            }, 2000);
+          }
+
+          function attachCartObserver(cartPage) {
+            if (!cartPage) {
+              return;
+            }
+
+            if (cartObserver) {
+              try {
+                cartObserver.disconnect();
+              } catch (_) {
+                // no-op
+              }
+            }
+
+            var observeTarget = cartPage.querySelector('.cart-item-container') || cartPage;
+            cartObserver = new MutationObserver(function () {
+              debug('cart mutation detected, re-scrape');
+              scrapeCart();
+            });
+
+            cartObserver.observe(observeTarget, {
+              childList: true,
+              subtree: true,
+              characterData: true,
+            });
+
+            debug('cart observer attached');
+            scrapeCart();
+            startRescrape();
+          }
+
+          function detectAndAttach() {
+            var cartPage = document.querySelector('app-mobile-cart-page');
+            if (!cartPage) {
+              return false;
+            }
+
+            debug('cart page detected');
+            hasExtractedOnce = true;
+            attachCartObserver(cartPage);
+            return true;
+          }
+
+          bodyObserver = new MutationObserver(function () {
+            if (hasExtractedOnce) {
+              return;
+            }
+            detectAndAttach();
+          });
+
+          if (document.body) {
+            bodyObserver.observe(document.body, {
+              childList: true,
+              subtree: true,
+            });
+          }
+
+          debug('init mutation observer + 500ms polling fallback');
+          visibilityPollTimer = setInterval(function () {
+            var found = detectAndAttach();
+            if (found && visibilityPollTimer) {
+              clearInterval(visibilityPollTimer);
+              visibilityPollTimer = null;
+              if (bodyObserver) {
+                try {
+                  bodyObserver.disconnect();
+                } catch (_) {
+                  // no-op
+                }
+              }
+            }
+          }, 500);
+
+          detectAndAttach();
+        } catch (e) {
+          try {
+            console.log('[CartExtract]', 'outer catch', e && e.message ? e.message : String(e));
+          } catch (_) {
+            // no-op
+          }
+        }
+        true;
+      })();
+    `;
+  }
+
   const handleMessage = useCallback((event: { nativeEvent: { data: string } }) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data) as CaptureResult;
+
+      // Strategy 0 hit: we got a URL, fetch the image from RN side (no CORS!)
+      if (msg.type === 'qr_url_result' && msg.url) {
+        console.log('[QR URL Extract Debug]', msg.debug);
+        console.log('[QR URL]', msg.url);
+
+        // Clear the safety timeout since we received a response
+        if (captureTimeoutRef.current) {
+          clearTimeout(captureTimeoutRef.current);
+          captureTimeoutRef.current = null;
+        }
+
+        // Fetch image from React Native side — bypasses WebView CORS entirely
+        fetch(msg.url)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('HTTP ' + response.status);
+            }
+            return response.blob();
+          })
+          .then((blob) => {
+            return new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                if (typeof reader.result === 'string') {
+                  resolve(reader.result);
+                } else {
+                  reject(new Error('FileReader result is not a string'));
+                }
+              };
+              reader.onerror = () => reject(new Error('FileReader error'));
+              reader.readAsDataURL(blob);
+            });
+          })
+          .then((base64Image) => {
+            console.log('[QR URL Fetch] Got base64, length:', base64Image.length);
+            setCapturedImage(base64Image);
+            setExtractedPrice(msg.price || 0);
+            setQrCodeImage(base64Image);
+
+            setQrCodeData(null);
+          })
+          .then(() => {
+            setShowPreview(true);
+            setCapturing(false);
+          })
+          .catch((fetchErr) => {
+            console.log('[QR URL Fetch Error]', fetchErr);
+            Alert.alert(
+              'Capture Failed',
+              'Found QR URL but failed to download image: ' + String(fetchErr),
+            );
+            setCapturing(false);
+          });
+
+        return;
+      }
+
+      // Existing pixel-based capture result
       if (msg.type === 'qr_capture_result') {
         console.log('[QR Capture Debug]', msg.debug);
 
@@ -541,19 +854,9 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
         setExtractedPrice(msg.price || 0);
         setQrCodeImage(msg.image);
 
-        decodeQR(msg.image)
-          .then((result) => {
-            setDecodedData(result.decoded_data);
-            setQrCodeData(result.decoded_data);
-          })
-          .catch(() => {
-            setDecodedData(null);
-            setQrCodeData(null);
-          })
-          .finally(() => {
-            setShowPreview(true);
-            setCapturing(false);
-          });
+        setQrCodeData(null);
+        setShowPreview(true);
+        setCapturing(false);
       }
     } catch {
       // ignore non-JSON messages from the WebView
@@ -587,7 +890,6 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
   function handleRetry() {
     setShowPreview(false);
     setCapturedImage(null);
-    setDecodedData(null);
     setExtractedPrice(0);
   }
 
@@ -598,7 +900,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
       totalPrice: extractedPrice,
       canteen,
       qrCodeImage: capturedImage,
-      qrCodeData: decodedData,
+      qrCodeData: null,
     });
   }
 
@@ -651,11 +953,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
               </View>
             )}
 
-            {decodedData ? (
-              <Text style={[styles.modalDetailText, { color: colors.text }]}>Data: {decodedData}</Text>
-            ) : (
-              <Text style={[styles.modalDetailText, { color: colors.sub }]}>Data: Not decoded</Text>
-            )}
+            <Text style={[styles.modalDetailText, { color: colors.text }]}>QR Code ready for deliverer</Text>
 
             {extractedPrice > 0 ? (
               <Text style={[styles.modalPriceText, { color: colors.accent }]}>Price: $ {extractedPrice.toFixed(2)}</Text>
