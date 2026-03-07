@@ -70,6 +70,16 @@ async def get_user_orders(db: AsyncSession, user_id: str) -> list[Order]:
     )
     return list(result.scalars().all())
 
+async def get_deliverer_orders(db: AsyncSession, user_id: str) -> list[Order]:
+    """Get orders where user is the deliverer with active status (accepted/picked_up)."""
+    result = await db.execute(
+        select(Order)
+        .where(Order.deliverer_id == user_id)
+        .where(Order.status.in_(["accepted", "picked_up"]))
+        .order_by(Order.created_at.asc())
+    )
+    return list(result.scalars().all())
+
 
 async def get_deliverer_queue(db: AsyncSession, preferred_halls: list[str] | None = None) -> list[Order]:
     """Get pending orders filtered by deliverer's preferred halls."""

@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../types';
 import { toggleDarkMode, toggleDeliverer } from '../api/users';
 import { getLeaderboard } from '../api/stats';
+import { getMyDeliveries } from '../api/orders';
 import { LeaderboardResponse } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
@@ -31,6 +32,7 @@ export default function DashboardScreen({ navigation }: Props) {
   // Local state for toggle, initialized from user profile
   const [isDelivererMode, setIsDelivererMode] = useState(user?.is_deliverer ?? false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
+  const [activeDeliveryCount, setActiveDeliveryCount] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   // Sync local state if user profile updates externally (optional but good practice)
@@ -45,7 +47,12 @@ export default function DashboardScreen({ navigation }: Props) {
       getLeaderboard()
         .then(setLeaderboard)
         .catch(err => console.error('Failed to fetch leaderboard:', err));
-    }, [])
+      if (isDelivererMode) {
+        getMyDeliveries()
+          .then(orders => setActiveDeliveryCount(orders.length))
+          .catch(err => console.error('Failed to fetch active deliveries:', err));
+      }
+    }, [isDelivererMode])
   );
 
   async function handleDarkToggle(value: boolean) {
@@ -180,7 +187,9 @@ export default function DashboardScreen({ navigation }: Props) {
             >
               <Text style={[styles.cardTitle, { color: colors.dm_accent }]}>Active Orders</Text>
               <Text style={[styles.cardDesc, { color: colors.sub }]}>
-                No active orders
+                {activeDeliveryCount === 0
+                  ? 'No active orders'
+                  : `${activeDeliveryCount} active order${activeDeliveryCount !== 1 ? 's' : ''}`}
               </Text>
             </TouchableOpacity>
           </View>

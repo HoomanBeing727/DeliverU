@@ -25,6 +25,11 @@ export async function getDelivererQueue(): Promise<Order[]> {
   const { data } = await client.get<Order[]>('/orders/queue');
   return data;
 }
+export async function getMyDeliveries(): Promise<Order[]> {
+  const { data } = await client.get<Order[]>('/orders/my-deliveries');
+  return data;
+}
+
 
 export async function getOrderDetail(orderId: string): Promise<Order> {
   const { data } = await client.get<Order>(`/orders/${orderId}`);
