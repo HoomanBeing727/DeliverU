@@ -100,6 +100,7 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   ProfileSetup: undefined;
+  EditProfile: undefined;
   Dashboard: undefined;
   CanteenSelect: undefined;
   CanteenWebView: { canteen: string; url: string };

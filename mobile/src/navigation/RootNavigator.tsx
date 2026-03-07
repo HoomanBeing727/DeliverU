@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ProfileSetupScreen from '../screens/ProfileSetupScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import CanteenSelectScreen from '../screens/CanteenSelectScreen';
 import CanteenWebViewScreen from '../screens/CanteenWebViewScreen';
@@ -42,6 +43,7 @@ export default function RootNavigator() {
 
         <>
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CanteenSelect" component={CanteenSelectScreen} />
           <Stack.Screen name="CanteenWebView" component={CanteenWebViewScreen} />
           <Stack.Screen name="OrderConfirm" component={OrderConfirmScreen} />

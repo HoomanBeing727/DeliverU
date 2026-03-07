@@ -247,7 +247,7 @@ export default function DashboardScreen({ navigation }: Props) {
 
         <TouchableOpacity
           style={styles.settingRow}
-          onPress={() => Alert.alert('Coming Soon', 'Profile editing is not yet implemented.')}
+          onPress={() => navigation.navigate('EditProfile')}
         >
           <Text style={[styles.settingLabel, { color: colors.text }]}>Edit Profile</Text>
           <Text style={[styles.chevron, { color: colors.sub }]}>›</Text>
