@@ -6,6 +6,7 @@ from database import get_db
 from models.user import User
 from schemas.auth import RegisterRequest, LoginRequest, TokenResponse
 from services.auth_service import hash_password, verify_password, create_access_token
+from services.credit_service import grant_initial_credits
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -28,6 +29,8 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
         hashed_password=hash_password(body.password),
     )
     db.add(user)
+    await db.flush()
+    await grant_initial_credits(db, user)
     await db.commit()
     await db.refresh(user)
 

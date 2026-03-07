@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,46 @@ import {
   ScrollView,
   Switch,
   Alert,
+  Animated,
 } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { useAuth } from '../context/AuthContext';
+import { RootStackParamList } from '../types';
 import { toggleDarkMode, toggleDeliverer } from '../api/users';
+import { getLeaderboard } from '../api/stats';
+import { LeaderboardResponse } from '../types';
 
-export default function DashboardScreen() {
+type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
+
+export default function DashboardScreen({ navigation }: Props) {
   const { user, logout, refreshUser } = useAuth();
 
   const isDark = user?.dark_mode ?? false;
   const colors = isDark
-    ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460' }
-    : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366' };
+    ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460' , dm_accent: '#eee' }
+    : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366'};
+
+  // Local state for toggle, initialized from user profile
+  const [isDelivererMode, setIsDelivererMode] = useState(user?.is_deliverer ?? false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Sync local state if user profile updates externally (optional but good practice)
+  useEffect(() => {
+    if (user) {
+      setIsDelivererMode(user.is_deliverer);
+    }
+  }, [user?.is_deliverer]);
+
+  useFocusEffect(
+    useCallback(() => {
+      getLeaderboard()
+        .then(setLeaderboard)
+        .catch(err => console.error('Failed to fetch leaderboard:', err));
+    }, [])
+  );
 
   async function handleDarkToggle(value: boolean) {
     try {
@@ -29,14 +57,33 @@ export default function DashboardScreen() {
     }
   }
 
-  async function handleDelivererToggle(value: boolean) {
-    try {
-      await toggleDeliverer(value);
-      await refreshUser();
-    } catch {
-      Alert.alert('Error', 'Failed to update deliverer status');
-    }
-  }
+  const handleModeToggle = (targetModeIsDeliverer: boolean) => {
+    if (isDelivererMode === targetModeIsDeliverer) return;
+
+    // Fade out
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(async () => {
+      // Switch mode and API call
+      setIsDelivererMode(targetModeIsDeliverer);
+      try {
+        await toggleDeliverer(targetModeIsDeliverer);
+        await refreshUser();
+      } catch (error) {
+        Alert.alert('Error', 'Failed to update mode');
+        setIsDelivererMode(!targetModeIsDeliverer); // Revert on failure
+      }
+
+      // Fade in
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
 
   async function handleLogout() {
     Alert.alert('Logout', 'Are you sure you want to sign out?', [
@@ -52,41 +99,138 @@ export default function DashboardScreen() {
           Hello, {user?.nickname ?? 'User'}!
         </Text>
         <Text style={[styles.subGreeting, { color: colors.sub }]}>
-          {user?.dorm_hall} — {user?.is_deliverer ? 'Orderer & Deliverer' : 'Orderer'}
+          {user?.dorm_hall}
         </Text>
+
+        <Text style={[styles.creditsText, { color: colors.accent }]}>
+          {user?.credits ?? 0} DC
+        </Text>
+
+        {/* Toggle Switch */}
+        <View style={[styles.toggleContainer, { backgroundColor: isDark ? '#2a2a40' : '#e0e0e0' }]}>
+          <TouchableOpacity
+            style={[
+              styles.toggleBtn,
+              !isDelivererMode && { backgroundColor: colors.accent },
+            ]}
+            onPress={() => handleModeToggle(false)}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.toggleText,
+                { color: !isDelivererMode ? '#fff' : colors.text },
+              ]}
+            >
+              Orderer
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toggleBtn,
+              isDelivererMode && { backgroundColor: colors.accent },
+            ]}
+            onPress={() => handleModeToggle(true)}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.toggleText,
+                { color: isDelivererMode ? '#fff' : colors.text },
+              ]}
+            >
+              Deliverer
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Action Cards */}
-      <View style={styles.cardRow}>
-        <TouchableOpacity
-          style={[styles.card, { backgroundColor: colors.card }]}
-          onPress={() => Alert.alert('Coming Soon', 'Order creation is not yet implemented.')}
-        >
-          <Text style={[styles.cardTitle, { color: colors.accent }]}>Order Food</Text>
-          <Text style={[styles.cardDesc, { color: colors.sub }]}>
-            Place a new delivery order
-          </Text>
-        </TouchableOpacity>
+      <Animated.View style={{ opacity: fadeAnim }}>
+        {/* Conditional Content */}
+        {!isDelivererMode ? (
+          /* Orderer View */
+          <View style={styles.contentContainer}>
+            <TouchableOpacity
+              style={[styles.card, { backgroundColor: colors.card }]}
+              onPress={() => navigation.navigate('CanteenSelect')}
+            >
+              <Text style={[styles.cardTitle, { color: colors.dm_accent }]}>Order Food</Text>
+              <Text style={[styles.cardDesc, { color: colors.sub }]}>
+                Place a new delivery order
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.card, { backgroundColor: colors.card }]}
-          onPress={() => Alert.alert('Coming Soon', 'Deliverer queue is not yet implemented.')}
-        >
-          <Text style={[styles.cardTitle, { color: colors.accent }]}>Deliver</Text>
-          <Text style={[styles.cardDesc, { color: colors.sub }]}>
-            Find orders to deliver
-          </Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.card, { backgroundColor: colors.card }]}
+              onPress={() => navigation.navigate('MyOrders')}
+            >
+              <Text style={[styles.cardTitle, { color: colors.dm_accent }]}>My Orders</Text>
+              <Text style={[styles.cardDesc, { color: colors.sub }]}>
+                Track your active and past orders
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          /* Deliverer View */
+          <View style={styles.contentContainer}>
+            <TouchableOpacity
+              style={[styles.card, { backgroundColor: colors.card }]}
+              onPress={() => navigation.navigate('DelivererQueue')}
+            >
+              <Text style={[styles.cardTitle, { color: colors.dm_accent }]}>Active Orders</Text>
+              <Text style={[styles.cardDesc, { color: colors.sub }]}>
+                No active orders
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </Animated.View>
+
+      {/* Leaderboard Section */}
+      <View style={[styles.section, { backgroundColor: colors.bg, padding: 0, shadowOpacity: 0, elevation: 0 }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text, marginLeft: 4 }]}>Leaderboard</Text>
+
+        {/* Top Orderers */}
+        <View style={[styles.card, { backgroundColor: colors.card, alignItems: 'stretch' }]}>
+          <Text style={[styles.cardTitle, { color: colors.dm_accent, textAlign: 'center', fontSize: 18 }]}>Top Orderers</Text>
+          {leaderboard?.top_orderers && leaderboard.top_orderers.length > 0 ? (
+            leaderboard.top_orderers.map((entry, index) => (
+              <View key={entry.user_id} style={[styles.leaderboardRow, { borderBottomColor: isDark ? '#333' : '#eee' }]}>
+                <Text style={[styles.leaderboardText, { color: colors.text }]}>
+                  #{index + 1} {entry.nickname}
+                </Text>
+                <Text style={[styles.leaderboardValue, { color: colors.sub }]}>
+                  {entry.value} orders
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={[styles.emptyText, { color: colors.sub, textAlign: 'center', marginTop: 8 }]}>No data yet</Text>
+          )}
+        </View>
+
+        {/* Top Deliverers */}
+        <View style={[styles.card, { backgroundColor: colors.card, alignItems: 'stretch' }]}>
+          <Text style={[styles.cardTitle, { color: colors.dm_accent, textAlign: 'center', fontSize: 18 }]}>Top Deliverers</Text>
+          {leaderboard?.top_deliverers && leaderboard.top_deliverers.length > 0 ? (
+            leaderboard.top_deliverers.map((entry, index) => (
+              <View key={entry.user_id} style={[styles.leaderboardRow, { borderBottomColor: isDark ? '#333' : '#eee' }]}>
+                <Text style={[styles.leaderboardText, { color: colors.text }]}>
+                  #{index + 1} {entry.nickname}
+                </Text>
+                <Text style={[styles.leaderboardValue, { color: colors.sub }]}>
+                  {Number(entry.value).toFixed(1)} ★
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={[styles.emptyText, { color: colors.sub, textAlign: 'center', marginTop: 8 }]}>No data yet</Text>
+          )}
+        </View>
       </View>
-
-      {/* Active Orders placeholder */}
-      <View style={[styles.section, { backgroundColor: colors.card }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Active Orders</Text>
-        <Text style={[styles.emptyText, { color: colors.sub }]}>No active orders</Text>
-      </View>
-
       {/* Settings */}
-      <View style={[styles.section, { backgroundColor: colors.card }]}>
+      <View style={[styles.section, { backgroundColor: colors.card, marginTop: 16 }]}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Settings</Text>
 
         <View style={styles.settingRow}>
@@ -99,15 +243,7 @@ export default function DashboardScreen() {
           />
         </View>
 
-        <View style={styles.settingRow}>
-          <Text style={[styles.settingLabel, { color: colors.text }]}>Deliverer Mode</Text>
-          <Switch
-            value={user?.is_deliverer ?? false}
-            onValueChange={handleDelivererToggle}
-            trackColor={{ false: '#ccc', true: colors.accent }}
-            thumbColor="#fff"
-          />
-        </View>
+        {/* Deliverer Mode Switch REMOVED */}
 
         <TouchableOpacity
           style={styles.settingRow}
@@ -142,30 +278,52 @@ const styles = StyleSheet.create({
   subGreeting: {
     fontSize: 14,
     marginTop: 4,
+    marginBottom: 20,
   },
-  cardRow: {
+  creditsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  toggleContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
-    gap: 12,
+    height: 44,
+    borderRadius: 25,
+    padding: 4,
+    width: '100%',
+  },
+  toggleBtn: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 22,
+  },
+  toggleText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  contentContainer: {
+    marginHorizontal: 24,
     marginBottom: 16,
   },
   card: {
-    flex: 1,
     borderRadius: 12,
-    padding: 20,
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
+    marginBottom: 16,
+    alignItems: 'center',
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   cardDesc: {
-    fontSize: 13,
+    fontSize: 15,
   },
   section: {
     marginHorizontal: 24,
@@ -201,5 +359,18 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: 22,
     fontWeight: '300',
+  },
+  leaderboardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  leaderboardText: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  leaderboardValue: {
+    fontSize: 15,
   },
 });

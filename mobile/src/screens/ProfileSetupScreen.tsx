@@ -63,6 +63,14 @@ export default function ProfileSetupScreen() {
       Alert.alert('Error', 'Please enter a nickname');
       return;
     }
+    if (nickname.trim().length < 2 || nickname.trim().length > 20) {
+      Alert.alert('Error', 'Nickname must be 2–20 characters');
+      return;
+    }
+    if (/\s/.test(nickname)) {
+      Alert.alert('Error', 'Nickname cannot contain spaces');
+      return;
+    }
     if (!dormHall) {
       Alert.alert('Error', 'Please select your dorm hall');
       return;

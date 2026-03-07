@@ -8,7 +8,14 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ProfileSetupScreen from '../screens/ProfileSetupScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import CanteenSelectScreen from '../screens/CanteenSelectScreen';
+import CanteenWebViewScreen from '../screens/CanteenWebViewScreen';
+import OrderConfirmScreen from '../screens/OrderConfirmScreen';
+import OrderDetailScreen from '../screens/OrderDetailScreen';
+import DelivererQueueScreen from '../screens/DelivererQueueScreen';
+import MyOrdersScreen from '../screens/MyOrdersScreen';
 
+import ChatScreen from '../screens/ChatScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
@@ -32,7 +39,18 @@ export default function RootNavigator() {
       ) : !user?.profile_completed ? (
         <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
       ) : (
-        <Stack.Screen name="Dashboard" component={DashboardScreen} />
+
+        <>
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="CanteenSelect" component={CanteenSelectScreen} />
+          <Stack.Screen name="CanteenWebView" component={CanteenWebViewScreen} />
+          <Stack.Screen name="OrderConfirm" component={OrderConfirmScreen} />
+          <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+          <Stack.Screen name="DelivererQueue" component={DelivererQueueScreen} />
+          <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
+          <Stack.Screen name="ChatScreen" component={ChatScreen} />
+        </>
+
       )}
     </Stack.Navigator>
   );

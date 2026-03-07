@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+import re
+
+from pydantic import BaseModel, field_validator
 
 
 VALID_HALLS = [
@@ -28,6 +30,20 @@ class ProfileSetupRequest(BaseModel):
     """Schema for initial profile setup."""
 
     nickname: str
+
+    @field_validator("nickname")
+    @classmethod
+    def nickname_rules(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("Nickname cannot be empty")
+        if len(v) < 2:
+            raise ValueError("Nickname must be at least 2 characters")
+        if len(v) > 20:
+            raise ValueError("Nickname must be at most 20 characters")
+        if ' ' in v:
+            raise ValueError("Nickname cannot contain spaces")
+        return v
     dorm_hall: str
     order_times: list[str]
     pref_take_order_location: str
@@ -54,6 +70,7 @@ class ProfileResponse(BaseModel):
     preferred_delivery_halls: list[str] | None
     dark_mode: bool
     profile_completed: bool
+    credits: int
 
     model_config = {"from_attributes": True}
 

@@ -33,6 +33,7 @@ def _user_to_response(user: User) -> ProfileResponse:
         preferred_delivery_halls=user.preferred_delivery_halls,
         dark_mode=user.dark_mode,
         profile_completed=user.profile_completed,
+        credits=user.credits,
     )
 
 

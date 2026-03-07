@@ -646,6 +646,9 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
                   var qtyEl = row.querySelector('.div-item-qty h4.item-qty');
                   var nameEl = row.querySelector('h4.item-name');
                   var priceEl = row.querySelector('h6.main-item-price-extra');
+                  if (!priceEl) {
+                    priceEl = row.querySelector('.cart-item-price h5.main-item-price');
+                  }
 
                   var qty = parseQty(qtyEl ? qtyEl.textContent : '');
                   var name = nameEl ? String(nameEl.textContent || '').trim() : '';
