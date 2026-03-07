@@ -142,12 +142,12 @@ export default function EditProfileScreen({ navigation }: Props) {
           <Text style={[styles.backText, { color: colors.text }]}>← Back</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
-        <View style={{ width: 60 }} />
+        <View style={styles.headerSpacer} />
       </View>
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+        style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={[styles.label, { color: colors.text }]}>Nickname</Text>
@@ -296,5 +296,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  headerSpacer: {
+    width: 60,
+  },
+  keyboardView: {
+    flex: 1,
   },
 });
