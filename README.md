@@ -1,4 +1,4 @@
-# UST Delivery
+# DeliverU
 
 Peer-to-peer campus food delivery app for HKUST students. Students can order food from canteens and have it delivered by other students using an in-app credit system. This platform facilitates student-led deliveries, allowing orderers to save time and deliverers to earn credits.
 
