@@ -115,4 +115,5 @@ export type RootStackParamList = {
   DelivererQueue: undefined;
   ChatScreen: { orderId: string };
   MyOrders: undefined;
+  MyDeliveries: undefined;
 };

@@ -163,7 +163,7 @@ async def get_order_detail(
 
     # Redact QR fields for non-orderer viewers of pending orders
 
-    if not is_orderer:
+    if not is_orderer and not is_deliverer:
 
         response.qr_code_image = None
 

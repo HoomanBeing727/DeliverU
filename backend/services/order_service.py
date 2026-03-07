@@ -11,6 +11,18 @@ from services.credit_service import add_credit, deduct_credit
 from services.chat_service import create_system_message, delete_chat
 
 
+def _format_delivery_habit(habit: str | None) -> str:
+    """Map delivery habit values to human-readable display names."""
+    if not habit:
+        return "Hand to Hand"
+    habit_map = {
+        "hand_to_hand": "Hand to Hand",
+        "floor": "Leave at Floor",
+        "door_handle": "Hang on Door Handle",
+    }
+    return habit_map.get(habit, habit)
+
+
 async def create_order(
     db: AsyncSession,
     user: User,
@@ -115,6 +127,25 @@ async def accept_order(db: AsyncSession, order_id: str, user: User) -> Order:
     order.deliverer_id = user.id
     order.accepted_at = datetime.now(timezone.utc)
     await create_system_message(db, order_id, "Order accepted! Chat is now available.")
+    
+    # Fetch orderer to get their preferences
+    orderer_result = await db.execute(select(User).where(User.id == order.orderer_id))
+    orderer = orderer_result.scalar_one()
+    
+    # Send delivery preferences info message
+    orderer_habit = _format_delivery_habit(orderer.pref_delivery_habit)
+    deliverer_habit = _format_delivery_habit(user.pref_delivery_habit)
+    pref_message = f"""📋 Delivery Preferences:
+• Orderer prefers: {orderer_habit}
+• Delivery to: {order.delivery_hall}
+• Deliverer prefers: {deliverer_habit}"""
+    await create_system_message(db, order_id, pref_message)
+    
+    # Detect hall access conflict
+    if order.delivery_preference != "hand_to_hand" and user.dorm_hall != order.delivery_hall:
+        conflict_message = f"⚠️ Hall access conflict detected: Deliverer is from {user.dorm_hall} but order is for {order.delivery_hall}. Delivery method changed to Hand to Hand (meet at hall lobby)."
+        await create_system_message(db, order_id, conflict_message)
+    
     return order
 
 

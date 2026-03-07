@@ -772,6 +772,67 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
             }
           }, 500);
 
+          // === Dine-in Blocker ===
+          function blockDineIn() {
+            var observer = new MutationObserver(function () {
+              try {
+                // Look for all clickable elements that might contain dine-in option
+                var elements = document.querySelectorAll('div, button, span, a, li');
+                for (var i = 0; i < elements.length; i++) {
+                  var el = elements[i];
+                  var text = (el.textContent || '').trim();
+                  
+                  // Check if this element contains "堂食" (dine-in)
+                  if (text === '堂食' || text.indexOf('堂食') !== -1) {
+                    // Remove any existing click handlers and add our blocker
+                    (function (elem) {
+                      var clickHandler = function (event) {
+                        debug('Dine-in option clicked, blocking it');
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                          window.ReactNativeWebView.postMessage(
+                            JSON.stringify({ type: 'dine_in_blocked' })
+                          );
+                        }
+                      };
+                      elem.addEventListener('click', clickHandler, true);
+                    })(el);
+                  }
+                  
+                  // Auto-click "外賣" (Takeaway) if found
+                  if (text === '外賣' || text.indexOf('外賣') !== -1) {
+                    (function (elem) {
+                      // Small delay to ensure the modal is fully rendered
+                      setTimeout(function () {
+                        if (elem && elem.click && typeof elem.click === 'function') {
+                          debug('Auto-clicking takeaway option');
+                          try {
+                            elem.click();
+                          } catch (clickErr) {
+                            debug('Failed to auto-click takeaway: ' + (clickErr && clickErr.message ? clickErr.message : String(clickErr)));
+                          }
+                        }
+                      }, 100);
+                    })(el);
+                  }
+                }
+              } catch (blockErr) {
+                debug('dine-in blocker error: ' + (blockErr && blockErr.message ? blockErr.message : String(blockErr)));
+              }
+            });
+
+            // Start observing the document for modal appearance
+            observer.observe(document.documentElement, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+            });
+            debug('dine-in blocker initialized');
+          }
+
+          blockDineIn();
+
           detectAndAttach();
         } catch (e) {
           try {
@@ -858,6 +919,14 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
         setExtractedItems(items);
         setExtractedPrice(totalPrice);
         console.log('[Cart Extract] Got items:', items.length);
+        return;
+      }
+
+      if (msg.type === 'dine_in_blocked') {
+        Alert.alert(
+          'Takeaway Only',
+          'This app only supports takeaway orders. Dine-in is not available.',
+        );
         return;
       }
 

@@ -15,6 +15,7 @@ import OrderConfirmScreen from '../screens/OrderConfirmScreen';
 import OrderDetailScreen from '../screens/OrderDetailScreen';
 import DelivererQueueScreen from '../screens/DelivererQueueScreen';
 import MyOrdersScreen from '../screens/MyOrdersScreen';
+import MyDeliveriesScreen from '../screens/MyDeliveriesScreen';
 
 import ChatScreen from '../screens/ChatScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,6 +50,7 @@ export default function RootNavigator() {
           <Stack.Screen name="OrderConfirm" component={OrderConfirmScreen} />
           <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
           <Stack.Screen name="DelivererQueue" component={DelivererQueueScreen} />
+          <Stack.Screen name="MyDeliveries" component={MyDeliveriesScreen} />
           <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
           <Stack.Screen name="ChatScreen" component={ChatScreen} />
         </>

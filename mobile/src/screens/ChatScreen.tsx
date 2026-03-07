@@ -19,7 +19,7 @@ import { useAuth } from '../context/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatScreen'>;
 
-export default function ChatScreen({ route }: Props) {
+export default function ChatScreen({ route, navigation }: Props) {
   const { orderId } = route.params;
   const { user } = useAuth();
   const colorScheme = useColorScheme();
@@ -134,6 +134,13 @@ export default function ChatScreen({ route }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackButton}>
+          <Text style={[styles.headerBackText, { color: colors.text }]}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Chat</Text>
+        <View style={styles.headerBackButton} />
+      </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -180,6 +187,24 @@ export default function ChatScreen({ route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+  },
+  headerBackButton: {
+    width: 60,
+  },
+  headerBackText: {
+    fontSize: 16,
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
   },
   keyboardView: {
     flex: 1,

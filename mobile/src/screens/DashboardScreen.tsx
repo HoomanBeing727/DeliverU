@@ -52,7 +52,7 @@ export default function DashboardScreen({ navigation }: Props) {
           .then(orders => setActiveDeliveryCount(orders.length))
           .catch(err => console.error('Failed to fetch active deliveries:', err));
       }
-    }, [isDelivererMode])
+    }, [])
   );
 
   async function handleDarkToggle(value: boolean) {
@@ -183,13 +183,23 @@ export default function DashboardScreen({ navigation }: Props) {
           <View style={styles.contentContainer}>
             <TouchableOpacity
               style={[styles.card, { backgroundColor: colors.card }]}
-              onPress={() => navigation.navigate('DelivererQueue')}
+              onPress={() => navigation.navigate('MyDeliveries')}
             >
               <Text style={[styles.cardTitle, { color: colors.dm_accent }]}>Active Orders</Text>
               <Text style={[styles.cardDesc, { color: colors.sub }]}>
                 {activeDeliveryCount === 0
                   ? 'No active orders'
                   : `${activeDeliveryCount} active order${activeDeliveryCount !== 1 ? 's' : ''}`}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.card, { backgroundColor: colors.card }]}
+              onPress={() => navigation.navigate('DelivererQueue')}
+            >
+              <Text style={[styles.cardTitle, { color: colors.dm_accent }]}>Available Orders</Text>
+              <Text style={[styles.cardDesc, { color: colors.sub }]}>
+                Browse orders to deliver
               </Text>
             </TouchableOpacity>
           </View>
