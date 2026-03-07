@@ -58,13 +58,13 @@ Automatically extract cart items from the Aigens WebView DOM and pre-populate th
 - `CanteenWebViewScreen.tsx`: Remove `decodeQR` import and all QR decode calls
 
 ### Definition of Done
-- [ ] `npx tsc --noEmit` passes with zero errors
-- [ ] Cart items are automatically extracted when user visits the shopping cart page in the Aigens WebView
-- [ ] Extracted items (name, qty, price) are passed to OrderConfirmScreen and pre-populated
-- [ ] QR screenshot is still captured and passed to OrderConfirmScreen
-- [ ] QR decode API call is removed
-- [ ] User can still manually edit/add/remove items on OrderConfirmScreen after auto-population
-- [ ] Empty cart gracefully falls back to manual entry (empty items list)
+- [x] `npx tsc --noEmit` passes with zero errors
+- [x] Cart items are automatically extracted when user visits the shopping cart page in the Aigens WebView
+- [x] Extracted items (name, qty, price) are passed to OrderConfirmScreen and pre-populated
+- [x] QR screenshot is still captured and passed to OrderConfirmScreen
+- [x] QR decode API call is removed
+- [x] User can still manually edit/add/remove items on OrderConfirmScreen after auto-population
+- [x] Empty cart gracefully falls back to manual entry (empty items list)
 
 ### Must Have
 - MutationObserver or polling to detect `app-mobile-cart-page` appearing in DOM
@@ -692,15 +692,15 @@ Wave FINAL (After ALL tasks — independent review):
 
 > 3 review agents run in PARALLEL. ALL must APPROVE. Rejection → fix → re-run.
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle` (COMPLETE: Re-verified after fix)
   Read the plan end-to-end. For each "Must Have": verify implementation exists (read file, check code). For each "Must NOT Have": search codebase for forbidden patterns — reject with file:line if found. Check evidence files exist in `.sisyphus/evidence/`. Compare deliverables against plan.
   Output: `Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT: APPROVE/REJECT`
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high` (APPROVED: Zero issues)
   Run `npx tsc --noEmit`. Review all changed files for: `as any`/`@ts-ignore`, empty catches, console.log in prod (acceptable in debug but flag excessive), commented-out code, unused imports. Check AI slop: excessive comments, over-abstraction, generic names (data/result/item/temp).
   Output: `TSC [PASS/FAIL] | Files [N clean/N issues] | VERDICT`
 
-- [ ] F3. **Scope Fidelity Check** — `deep`
+- [x] F3. **Scope Fidelity Check** — `deep` (COMPLETE: Re-verified after fix)
   For each task: read "What to do", read actual diff (git log/diff). Verify 1:1 — everything in spec was built (no missing), nothing beyond spec was built (no creep). Check "Must NOT do" compliance. Flag unaccounted changes.
   Output: `Tasks [N/N compliant] | Unaccounted [CLEAN/N files] | VERDICT`
 
@@ -720,11 +720,11 @@ npx tsc --noEmit  # Expected: no errors
 ```
 
 ### Final Checklist
-- [ ] Cart items scraped from `.cart-item-wrapper` elements
-- [ ] Items include name, quantity, price for both main items and sub-items
-- [ ] Total price extracted from `.div-prices .col-right h5`
-- [ ] OrderConfirmScreen pre-populated with extracted items
-- [ ] QR screenshot still captured and passed through
-- [ ] QR decode call removed
-- [ ] `npx tsc --noEmit` passes
-- [ ] User can still manually edit items after auto-population
+- [x] Cart items scraped from `.cart-item-wrapper` elements
+- [x] Items include name, quantity, price for both main items and sub-items
+- [x] Total price extracted from `.div-prices .col-right h5`
+- [x] OrderConfirmScreen pre-populated with extracted items
+- [x] QR screenshot still captured and passed through
+- [x] QR decode call removed
+- [x] `npx tsc --noEmit` passes
+- [x] User can still manually edit items after auto-population
