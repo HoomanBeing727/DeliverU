@@ -15,12 +15,14 @@ import { WebView } from 'react-native-webview';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { OrderItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CanteenWebView'>;
 
 export default function CanteenWebViewScreen({ navigation, route }: Props) {
   const { canteen, url } = route.params;
   const { user } = useAuth();
+  const { showToast } = useToast();
   const webViewRef = useRef<WebView>(null);
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
@@ -31,6 +33,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
   const [showPreview, setShowPreview] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
   const captureTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasShownTakeawayToastRef = useRef(false);
 
   const isDark = user?.dark_mode ?? false;
   const colors = isDark
@@ -634,45 +637,79 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
 
           function scrapeCart() {
             try {
-              var wrappers = document.querySelectorAll('.cart-item-wrapper');
               var items = [];
+              var totalPrice = 0;
 
-              for (var i = 0; i < wrappers.length; i++) {
-                var wrapper = wrappers[i];
-                var rows = wrapper.querySelectorAll('.main-item-row.main-item, .main-item-row.sub-item');
+              // === Strategy 1: LG1 (csd.order.place) DOM ===
+              var wrappers = document.querySelectorAll('.cart-item-wrapper');
+              if (wrappers.length > 0) {
+                debug('scrapeCart: using LG1 strategy (' + wrappers.length + ' wrappers)');
+                for (var i = 0; i < wrappers.length; i++) {
+                  var wrapper = wrappers[i];
+                  var rows = wrapper.querySelectorAll('.main-item-row.main-item, .main-item-row.sub-item');
 
-                for (var j = 0; j < rows.length; j++) {
-                  var row = rows[j];
-                  var qtyEl = row.querySelector('.div-item-qty h4.item-qty');
-                  var nameEl = row.querySelector('h4.item-name');
-                  var priceEl = row.querySelector('h6.main-item-price-extra');
-                  if (!priceEl) {
-                    priceEl = row.querySelector('.cart-item-price h5.main-item-price');
+                  for (var j = 0; j < rows.length; j++) {
+                    var row = rows[j];
+                    var qtyEl = row.querySelector('.div-item-qty h4.item-qty');
+                    var nameEl = row.querySelector('h4.item-name');
+                    var priceEl = row.querySelector('h6.main-item-price-extra');
+                    if (!priceEl) {
+                      priceEl = row.querySelector('.cart-item-price h5.main-item-price');
+                    }
+
+                    var qty = parseQty(qtyEl ? qtyEl.textContent : '');
+                    var name = nameEl ? String(nameEl.textContent || '').trim() : '';
+                    var price = parsePrice(priceEl ? priceEl.textContent : '');
+
+                    if (!name) continue;
+                    items.push({ name: name, qty: qty, price: price });
+                  }
+                }
+
+                var totalNode = document.querySelector('.div-prices .col-right h5');
+                totalPrice = parsePrice(totalNode ? totalNode.textContent : '');
+              }
+
+              // === Strategy 2: Ionic (now.order.place) DOM — LSK / Asia Pacific ===
+              if (items.length === 0) {
+                var cartCards = document.querySelectorAll('ion-card.cart-list-box');
+                if (cartCards.length > 0) {
+                  debug('scrapeCart: using Ionic strategy (' + cartCards.length + ' cards)');
+                  for (var ci = 0; ci < cartCards.length; ci++) {
+                    var card = cartCards[ci];
+                    var header = card.querySelector('ion-card-header.list-title-box');
+                    if (!header) continue;
+
+                    var cardNameEl = header.querySelector('p.title-text');
+                    var cardQtyEl = header.querySelector('p.subset-qty-text');
+                    var cardPriceEl = header.querySelector('p.price-text');
+
+                    var cardName = cardNameEl ? String(cardNameEl.textContent || '').trim() : '';
+                    var cardQty = parseQty(cardQtyEl ? cardQtyEl.textContent : '');
+                    var cardPrice = parsePrice(cardPriceEl ? cardPriceEl.textContent : '');
+
+                    // If qty came from header but is 0, check edit-box for qty
+                    if (cardQty === 0) {
+                      var editBox = card.querySelector('.edit-box .subset-qty-text p');
+                      if (editBox) {
+                        cardQty = parseQty(editBox.textContent);
+                      }
+                    }
+                    if (cardQty === 0) cardQty = 1;
+
+                    if (!cardName) continue;
+                    items.push({ name: cardName, qty: cardQty, price: cardPrice });
                   }
 
-                  var qty = parseQty(qtyEl ? qtyEl.textContent : '');
-                  var name = nameEl ? String(nameEl.textContent || '').trim() : '';
-                  var price = parsePrice(priceEl ? priceEl.textContent : '');
-
-                  if (!name) {
-                    continue;
+                  // Total from footer button
+                  var ftPriceEl = document.querySelector('.sendOrder-button p.priceText-text');
+                  if (ftPriceEl) {
+                    totalPrice = parsePrice(ftPriceEl.textContent);
                   }
-
-                  items.push({
-                    name: name,
-                    qty: qty,
-                    price: price,
-                  });
                 }
               }
 
-              var totalNode = document.querySelector('.div-prices .col-right h5');
-              var totalPrice = parsePrice(totalNode ? totalNode.textContent : '');
-              var payload = {
-                items: items,
-                totalPrice: totalPrice,
-              };
-
+              var payload = { items: items, totalPrice: totalPrice };
               debug('scraped items=' + items.length + ' totalPrice=' + totalPrice);
               postCartData(payload);
             } catch (scrapeError) {
@@ -681,19 +718,25 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
             }
           }
 
+          function findCartPage() {
+            return document.querySelector('app-mobile-cart-page') || document.querySelector('cart-page');
+          }
+
           function startRescrape() {
             if (rescrapeInterval) {
               return;
             }
             debug('start 2s re-poll while cart visible');
             rescrapeInterval = setInterval(function () {
-              var cartPage = document.querySelector('app-mobile-cart-page');
+              var cartPage = findCartPage();
               if (!cartPage) {
                 if (rescrapeInterval) {
                   clearInterval(rescrapeInterval);
                   rescrapeInterval = null;
                 }
-                debug('cart hidden, stop 2s re-poll');
+                // Reset so we re-detect when user returns to cart
+                hasExtractedOnce = false;
+                debug('cart hidden, stop 2s re-poll, reset detection');
                 return;
               }
               scrapeCart();
@@ -713,7 +756,10 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
               }
             }
 
-            var observeTarget = cartPage.querySelector('.cart-item-container') || cartPage;
+            // LG1 uses .cart-item-container, Ionic uses .flex-content or the page itself
+            var observeTarget = cartPage.querySelector('.cart-item-container')
+              || cartPage.querySelector('.flex-content')
+              || cartPage;
             cartObserver = new MutationObserver(function () {
               debug('cart mutation detected, re-scrape');
               scrapeCart();
@@ -731,7 +777,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
           }
 
           function detectAndAttach() {
-            var cartPage = document.querySelector('app-mobile-cart-page');
+            var cartPage = findCartPage();
             if (!cartPage) {
               return false;
             }
@@ -756,78 +802,108 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
             });
           }
 
-          debug('init mutation observer + 500ms polling fallback');
+          debug('init mutation observer + 1s polling fallback');
           visibilityPollTimer = setInterval(function () {
-            var found = detectAndAttach();
-            if (found && visibilityPollTimer) {
-              clearInterval(visibilityPollTimer);
-              visibilityPollTimer = null;
-              if (bodyObserver) {
-                try {
-                  bodyObserver.disconnect();
-                } catch (_) {
-                  // no-op
-                }
-              }
-            }
-          }, 500);
+            if (hasExtractedOnce) return;
+            detectAndAttach();
+          }, 1000);
 
           // === Dine-in Blocker ===
           function blockDineIn() {
-            var observer = new MutationObserver(function () {
+            if (window.__deliveru_dinein_blocker_initialized) return;
+            window.__deliveru_dinein_blocker_initialized = true;
+
+            var debounceTimer = null;
+
+            function findTakeawayElement() {
+              var all = document.querySelectorAll('div, button, span, a, li');
+              for (var t = 0; t < all.length; t++) {
+                var txt = (all[t].textContent || '').trim();
+                if (txt === '\u5916\u8CE3' || txt === '\u5916\u5356') {
+                  return all[t];
+                }
+              }
+              return null;
+            }
+
+            function scanAndBlock() {
               try {
-                // Look for all clickable elements that might contain dine-in option
-                var elements = document.querySelectorAll('div, button, span, a, li');
-                for (var i = 0; i < elements.length; i++) {
-                  var el = elements[i];
+                var candidates = document.querySelectorAll('div, button, span, a, li');
+
+                for (var i = 0; i < candidates.length; i++) {
+                  var el = candidates[i];
                   var text = (el.textContent || '').trim();
-                  
-                  // Check if this element contains "堂食" (dine-in)
-                  if (text === '堂食' || text.indexOf('堂食') !== -1) {
-                    // Remove any existing click handlers and add our blocker
-                    (function (elem) {
-                      var clickHandler = function (event) {
-                        debug('Dine-in option clicked, blocking it');
-                        event.preventDefault();
-                        event.stopPropagation();
-                        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-                          window.ReactNativeWebView.postMessage(
-                            JSON.stringify({ type: 'dine_in_blocked' })
-                          );
-                        }
-                      };
-                      elem.addEventListener('click', clickHandler, true);
-                    })(el);
-                  }
-                  
-                  // Auto-click "外賣" (Takeaway) if found
-                  if (text === '外賣' || text.indexOf('外賣') !== -1) {
-                    (function (elem) {
-                      // Small delay to ensure the modal is fully rendered
-                      setTimeout(function () {
-                        if (elem && elem.click && typeof elem.click === 'function') {
-                          debug('Auto-clicking takeaway option');
-                          try {
-                            elem.click();
-                          } catch (clickErr) {
-                            debug('Failed to auto-click takeaway: ' + (clickErr && clickErr.message ? clickErr.message : String(clickErr)));
+
+                  // Block dine-in clicks
+                  if ((text === '\u5802\u98DF' || text.indexOf('\u5802\u98DF') !== -1) && text.length <= 6) {
+                    if (!el.dataset.deliveruDineinBound) {
+                      el.dataset.deliveruDineinBound = '1';
+                      (function (elem) {
+                        elem.addEventListener('click', function (event) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          event.stopImmediatePropagation();
+                          debug('Blocked dine-in click');
+
+                          // Notify RN to show warning toast
+                          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'dine_in_blocked' }));
                           }
-                        }
-                      }, 100);
-                    })(el);
+
+                          // Auto-click takeaway
+                          var twEl = findTakeawayElement();
+                          if (twEl && typeof twEl.click === 'function') {
+                            setTimeout(function () {
+                              try { twEl.click(); } catch (_) {}
+                            }, 150);
+                          }
+                        }, true);
+                      })(el);
+                    }
+                  }
+
+                  // Track user-initiated takeaway clicks
+                  if ((text === '\u5916\u8CE3' || text.indexOf('\u5916\u8CE3') !== -1 || text === '\u5916\u5356' || text.indexOf('\u5916\u5356') !== -1) && text.length <= 6) {
+                    if (!el.dataset.deliveruTakeawayBound) {
+                      el.dataset.deliveruTakeawayBound = '1';
+                      (function (elem) {
+                        elem.addEventListener('click', function (event) {
+                          if (typeof event.isTrusted === 'boolean' && !event.isTrusted) return;
+                          if (window.__deliveru_takeaway_selected_sent) return;
+                          window.__deliveru_takeaway_selected_sent = true;
+                          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                            debug('Takeaway selected by user');
+                            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'takeaway_selected' }));
+                          }
+                        }, true);
+                      })(el);
+                    }
                   }
                 }
               } catch (blockErr) {
                 debug('dine-in blocker error: ' + (blockErr && blockErr.message ? blockErr.message : String(blockErr)));
               }
+            }
+
+            // Debounced observer — fires scanAndBlock at most once per 300ms
+            var observer = new MutationObserver(function () {
+              if (debounceTimer) return;
+              debounceTimer = setTimeout(function () {
+                debounceTimer = null;
+                scanAndBlock();
+              }, 300);
             });
 
-            // Start observing the document for modal appearance
-            observer.observe(document.documentElement, {
-              childList: true,
-              subtree: true,
-              attributes: true,
-            });
+            // Observe body only, childList + subtree (NO attributes — avoids excessive firing)
+            if (document.body) {
+              observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+              });
+            }
+
+            // Initial scan
+            scanAndBlock();
             debug('dine-in blocker initialized');
           }
 
@@ -922,11 +998,19 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
         return;
       }
 
+      if (msg.type === 'takeaway_selected') {
+        if (!hasShownTakeawayToastRef.current) {
+          showToast('This app only supports takeaway orders.', 'warning');
+          hasShownTakeawayToastRef.current = true;
+        }
+        return;
+      }
+
       if (msg.type === 'dine_in_blocked') {
-        Alert.alert(
-          'Takeaway Only',
-          'This app only supports takeaway orders. Dine-in is not available.',
-        );
+        if (!hasShownTakeawayToastRef.current) {
+          showToast('This app only supports takeaway orders. Takeaway has been selected for you.', 'warning');
+          hasShownTakeawayToastRef.current = true;
+        }
         return;
       }
 
@@ -960,7 +1044,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
     } catch {
       // ignore non-JSON messages from the WebView
     }
-  }, []);
+  }, [showToast]);
 
   function handleDone() {
     if (capturing) {

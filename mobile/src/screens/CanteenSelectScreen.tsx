@@ -22,12 +22,26 @@ export default function CanteenSelectScreen({ navigation }: Props) {
     ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460' }
     : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366' };
 
-  const handleCanteenSelect = () => {
-    navigation.navigate('CanteenWebView', {
+  const canteens = [
+    {
+      name: 'LG1 Canteen',
       canteen: 'LG1',
+      desc: 'Asian Cuisine & More',
       url: 'https://csd.order.place/home/store/102829?mode=prekiosk&_aigens_source=scan&onpremise=true',
-    });
-  };
+    },
+    {
+      name: 'LSK Canteen',
+      canteen: 'LSK',
+      desc: 'LSK Chinese & Western',
+      url: 'https://now.order.place/#/store/102997/mode/prekiosk',
+    },
+    {
+      name: 'Asia Pacific Catering',
+      canteen: 'Asia Pacific',
+      desc: 'Asia Pacific Catering',
+      url: 'https://now.order.place/#/store/5173439666061312/mode/prekiosk',
+    },
+  ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -45,17 +59,20 @@ export default function CanteenSelectScreen({ navigation }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <TouchableOpacity
-          style={[styles.card, { backgroundColor: colors.card }]}
-          onPress={handleCanteenSelect}
-          activeOpacity={0.8}
-        >
-          <View>
-            <Text style={[styles.canteenName, { color: colors.text }]}>LG1 Canteen</Text>
-            <Text style={[styles.canteenDesc, { color: colors.sub }]}>Asian Cuisine & More</Text>
-          </View>
-          <Text style={[styles.arrow, { color: colors.sub }]}>›</Text>
-        </TouchableOpacity>
+        {canteens.map((c) => (
+          <TouchableOpacity
+            key={c.canteen}
+            style={[styles.card, { backgroundColor: colors.card }]}
+            onPress={() => navigation.navigate('CanteenWebView', { canteen: c.canteen, url: c.url })}
+            activeOpacity={0.8}
+          >
+            <View>
+              <Text style={[styles.canteenName, { color: colors.text }]}>{c.name}</Text>
+              <Text style={[styles.canteenDesc, { color: colors.sub }]}>{c.desc}</Text>
+            </View>
+            <Text style={[styles.arrow, { color: colors.sub }]}>›</Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );

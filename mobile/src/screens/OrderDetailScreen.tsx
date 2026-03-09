@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
-  Animated
+  Animated,
+  Image
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -129,13 +130,13 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
             else if (updated.status === 'cancelled') type = 'warning';
             
             showToast(`Order status updated: ${statusText}`, type);
-            setOrder(updated);
-            setPrevStatus(updated.status);
           }
+          setOrder(updated);
+          setPrevStatus(updated.status);
         } catch (e) {
           console.log('Polling error', e);
         }
-      }, 15000);
+      }, 5000);
     }
 
     return () => {
@@ -380,6 +381,20 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
           </View>
         </View>
 
+        {/* QR Code Section - Show to orderer and deliverer */}
+        {order.qr_code_image && (isOrderer || isDeliverer) && (
+          <View style={[styles.section, { backgroundColor: colors.card }]}>
+            <Text style={[styles.sectionTitle, { color: colors.sub }]}>ORDER QR CODE</Text>
+            <View style={styles.qrContainer}>
+              <Image
+                source={{ uri: order.qr_code_image }}
+                style={styles.qrImage}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+        )}
+
         {/* Timeline */}
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text style={[styles.sectionTitle, { color: colors.sub }]}>TIMELINE</Text>
@@ -518,7 +533,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
               </TouchableOpacity>
             )}
 
-            {isOrderer && order.status === 'pending' && (
+            {isOrderer && (order.status === 'pending' || order.status === 'accepted') && (
               <TouchableOpacity 
                 style={[styles.button, { backgroundColor: colors.bg, borderColor: colors.error, borderWidth: 1 }]}
                 onPress={() => handleAction('cancelled', cancelOrder, 'Are you sure you want to cancel this order?')}
@@ -730,5 +745,14 @@ const styles = StyleSheet.create({
   feedbackText: {
     fontStyle: 'italic',
     fontSize: 14,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    padding: 8,
+  },
+  qrImage: {
+    width: 250,
+    height: 250,
+    borderRadius: 8,
   }
 });

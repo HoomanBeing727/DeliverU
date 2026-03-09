@@ -43,6 +43,7 @@ npm run start:lan:ts:nix          # macOS/Linux
 ### No CI/CD, Linting, or Test Frameworks
 - **No pytest, jest, ruff, ESLint, Prettier** — do NOT invoke them.
 - Only verification available: `npx tsc --noEmit` for frontend.
+- Backend has no automated checks. Manually verify by running the server.
 
 ---
 
@@ -71,7 +72,9 @@ from models.user import User
 
 **Pydantic** — `BaseModel` for request/response schemas. `field_validator` with `@classmethod`. Response models use `model_config = {"from_attributes": True}` for ORM conversion. Settings via `pydantic-settings` `BaseSettings` with `model_config = {"env_file": ".env"}`.
 
-**Formatting** — 4-space indent. Double blank lines between top-level definitions. Module-level singletons for expensive objects. Triple-quote docstrings required for all public functions.
+**Router pattern** — `APIRouter(prefix="/resource", tags=["resource"])`. Auth via `Depends(get_current_user)`. DB via `Depends(get_db)`. Commit + refresh in router, not service. Services return ORM objects.
+
+**Formatting** — 4-space indent. Double blank lines between top-level definitions. Module-level singletons for expensive objects. Triple-quote docstrings for all public functions.
 
 ### TypeScript (Frontend)
 
@@ -92,7 +95,7 @@ import { UserProfile } from '../types';
 
 **State** — `useState`/`useEffect` for local. React Context for global (AuthContext, ToastContext). Context pattern: `createContext<T | undefined>(undefined)` + custom hook with `throw` guard.
 
-**API layer** — Axios with request interceptor for Bearer token. Functions return typed Promises. Interfaces for request payloads defined in the API module files.
+**API layer** — Axios with request interceptor for Bearer token (`src/api/client.ts`). Per-resource modules (`src/api/orders.ts`, etc.) export typed async functions. Request payload interfaces defined in API module. Return types reference `src/types/index.ts`.
 
 **Error handling** — `try/catch` with `Alert.alert()` or `useToast().showToast()` for user-facing errors. Catch blocks do NOT re-throw unless propagating to context.
 
@@ -100,107 +103,43 @@ import { UserProfile } from '../types';
 
 ## PROJECT STRUCTURE
 ```
-UST_Delivery/
-├── backend/
-│   ├── main.py                    # FastAPI app, CORS, lifespan (auto-creates tables)
-│   ├── config.py                  # pydantic-settings: database_url, jwt_secret, jwt_algorithm, jwt_expiry_hours
-│   ├── database.py                # async engine, session maker, Base, get_db
-│   ├── docker-compose.yml         # PostgreSQL 16 container
-│   ├── start_server.bat           # Windows shortcut: activate venv + run uvicorn
-│   ├── .env                       # DATABASE_URL, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_HOURS
-│   ├── requirements.txt           # fastapi, uvicorn, sqlalchemy, asyncpg, pydantic, python-jose, passlib, Pillow, pyzbar
-│   ├── models/
-│   │   ├── user.py                # User (UUID pk, credentials, profile, credits, average_rating)
-│   │   ├── order.py               # Order (orderer/deliverer FKs, items JSON, status, timestamps)
-│   │   ├── credit_transaction.py  # CreditTransaction (user FK, amount, reason, order FK)
-│   │   ├── rating.py              # Rating (order FK, rater/ratee FKs, stars, feedback)
-│   │   └── message.py             # ChatMessage (order FK, sender FK, content, message_type)
-│   ├── schemas/
-│   │   ├── auth.py                # RegisterRequest, LoginRequest, TokenResponse
-│   │   ├── user.py                # ProfileSetupRequest, ProfileResponse, toggle schemas, VALID_HALLS
-│   │   ├── order.py               # OrderCreateRequest, OrderResponse, OrderItemSchema, OrderStatusUpdate
-│   │   ├── credit.py              # CreditBalanceResponse, CreditHistoryResponse, CreditTransactionResponse
-│   │   ├── rating.py              # RateRequest, RatingResponse
-│   │   ├── chat.py                # SendMessageRequest, ChatMessageResponse
-│   │   ├── qr.py                  # QRDecodeRequest, QRDecodeResponse
-│   │   └── stats.py               # LeaderboardEntry, LeaderboardResponse
-│   ├── services/
-│   │   ├── auth_service.py        # bcrypt hash/verify, JWT create/decode
-│   │   ├── order_service.py       # create/accept/pickup/deliver/cancel order, credit integration
-│   │   ├── credit_service.py      # add_credit, deduct_credit, get_history
-│   │   ├── rating_service.py      # submit_rating, get_order_ratings
-│   │   ├── chat_service.py        # send_message, get_messages, create_system_message, delete_chat
-│   │   └── qr_service.py          # decode_qr_from_base64 (Pillow + pyzbar)
-│   ├── middleware/
-│   │   └── auth_middleware.py     # get_current_user FastAPI dependency
-│   └── routers/
-│       ├── auth.py                # POST /auth/register, /auth/login
-│       ├── users.py               # GET/PUT/PATCH /users/me/*
-│       ├── orders.py              # POST/GET /orders, /orders/{id}, /orders/{id}/accept|pickup|deliver|cancel
-│       ├── credits.py             # GET /credits/balance, /credits/history
-│       ├── ratings.py             # POST/GET /orders/{id}/rate, /orders/{id}/ratings
-│       ├── chat.py                # POST/GET /orders/{id}/chat
-│       ├── qr.py                  # POST /qr/decode
-│       └── stats.py               # GET /stats/leaderboard
-├── mobile/
-│   ├── App.tsx                    # Entry: ToastProvider → AuthProvider → NavigationContainer
-│   ├── index.ts                   # registerRootComponent
-│   ├── app.json                   # Expo config
-│   └── src/
-│       ├── api/
-│       │   ├── client.ts          # Axios instance, Bearer interceptor, base URL config
-│       │   ├── auth.ts            # login, register
-│       │   ├── users.ts           # getProfile, setupProfile, toggleDarkMode, toggleDeliverer
-│       │   ├── orders.ts          # createOrder, getMyOrders, getDelivererQueue, accept/pickup/deliver/cancel
-│       │   ├── credits.ts         # getBalance, getHistory
-│       │   ├── ratings.ts         # submitRating, getOrderRatings
-│       │   ├── chat.ts            # sendMessage, getMessages
-│       │   ├── qr.ts              # decodeQR
-│       │   └── stats.ts           # getLeaderboard
-│       ├── context/
-│       │   ├── AuthContext.tsx     # token, user, login/register/logout/refreshUser
-│       │   └── ToastContext.tsx    # showToast/hideToast with Toast component
-│       ├── navigation/
-│       │   └── RootNavigator.tsx   # Stack nav: Login/Register → ProfileSetup → Dashboard + order screens
-│       ├── screens/
-│       │   ├── LoginScreen.tsx
-│       │   ├── RegisterScreen.tsx
-│       │   ├── ProfileSetupScreen.tsx
-│       │   ├── DashboardScreen.tsx
-│       │   ├── CanteenSelectScreen.tsx
-│       │   ├── CanteenWebViewScreen.tsx
-│       │   ├── OrderConfirmScreen.tsx
-│       │   ├── OrderDetailScreen.tsx
-│       │   ├── DelivererQueueScreen.tsx
-│       │   ├── MyOrdersScreen.tsx
-│       │   └── ChatScreen.tsx
-│       ├── components/
-│       │   ├── ChipSelector.tsx
-│       │   ├── RadioGroup.tsx
-│       │   ├── OrderCard.tsx
-│       │   ├── StarRating.tsx
-│       │   └── Toast.tsx
-│       ├── constants/dorms.ts     # HKUST_HALLS, TIME_SLOTS, TAKE_ORDER_LOCATIONS, DELIVERY_HABITS
-│       └── types/index.ts         # Order, OrderItem, UserProfile, CreditTransaction, Rating, ChatMessage, LeaderboardEntry, RootStackParamList
-└── detailed_plan.md               # Full product specification
+backend/
+├─ main.py              # FastAPI app, CORS, lifespan (auto-creates tables)
+├─ config.py            # pydantic-settings: database_url, jwt_secret, jwt_algorithm, jwt_expiry_hours
+├─ database.py          # async engine, session maker, Base, get_db
+├─ models/              # SQLAlchemy ORM: User, Order, CreditTransaction, Rating, ChatMessage
+├─ schemas/             # Pydantic request/response schemas (mirror routers 1:1)
+├─ services/            # Business logic (order_service, credit_service, auth_service, etc.)
+├─ middleware/          # auth_middleware.py — get_current_user dependency
+└─ routers/             # API endpoints: auth, users, orders, credits, ratings, chat, qr, stats
+mobile/src/
+├─ api/                 # Typed Axios client (client.ts + per-resource modules)
+├─ context/             # AuthContext.tsx, ToastContext.tsx
+├─ navigation/          # RootNavigator.tsx — Stack nav with auth gating
+├─ screens/             # 13 screens: Login, Register, Dashboard, OrderDetail, Chat, etc.
+├─ components/          # ChipSelector, RadioGroup, OrderCard, StarRating, Toast
+├─ constants/dorms.ts   # HKUST_HALLS, TIME_SLOTS, TAKE_ORDER_LOCATIONS, DELIVERY_HABITS
+└─ types/index.ts       # All TS interfaces: Order, UserProfile, ChatMessage, RootStackParamList
 ```
 
 ---
 
 ## CRITICAL RULES FOR AGENTS
 
-1. **NO BROKEN CODE** — Run `npx tsc --noEmit` after any TS changes. Backend has no automated checks.
+1. **NO BROKEN CODE** — Run `npx tsc --noEmit` (in `mobile/`) after any TS changes. Backend has no automated checks.
 2. **NO HALLUCINATED TOOLS** — No `pytest`, `ruff`, `jest`, `eslint`, `prettier`. They don't exist here.
 3. **BACKEND ENTRY** — `uvicorn main:app` from `backend/` dir (NOT `app.main:app`).
 4. **DATABASE** — PostgreSQL via Docker. Async SQLAlchemy + asyncpg. Tables auto-created on startup via lifespan.
 5. **AUTH FLOW** — Register/Login → JWT → Bearer header → `get_current_user` dependency.
 6. **NAV FLOW** — No token → Login/Register. Token + no profile → ProfileSetup. Profile done → Dashboard + order screens.
-7. **`.gitignore` GOTCHA** — `models/` is gitignored (originally for ML model files). Backend model files must be force-added: `git add -f backend/models/`.
+7. **`.gitignore` GOTCHA** — `models/` is gitignored (for ML files). Backend model files must be force-added: `git add -f backend/models/`.
 8. **`.env` SECRETS** — `backend/.env` has dev secrets. Never commit new secrets without confirming.
+9. **COMMIT PATTERN** — Router commits (db.commit + db.refresh), services just mutate/flush. Never commit inside a service function.
+10. **NEW FEATURE CHECKLIST** — Model (`models/`) → Schema (`schemas/`) → Service (`services/`) → Router (`routers/`, register in `main.py`) → API module (`mobile/src/api/`) → Types (`mobile/src/types/index.ts`) → Screen → Nav registration.
 
 ## ANTI-PATTERNS TO AVOID
-- **Python**: `from typing import List, Optional` (use `list[str]`, `str | None`). Bare `except:`. Hardcoded config values.
-- **TypeScript**: `any` types. Inline style objects. Mutating state directly. Missing return types on API calls.
+- **Python**: `from typing import List, Optional` (use `list[str]`, `str | None`). Bare `except:`. Hardcoded config values. Committing DB inside services.
+- **TypeScript**: `any` types. Inline style objects. Mutating state directly. Missing return types on API calls. `@ts-ignore` / `@ts-expect-error`.
 - **Both**: Committing without being asked. Adding dependencies without justification. Suppressing type errors (`as any`, `@ts-ignore`).
 
 ## DOMAIN CONCEPTS

@@ -27,9 +27,7 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
     : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366', input: '#fff', border: '#ddd' };
 
   const [items, setItems] = useState<OrderItem[]>(
-    passedItems && passedItems.length > 0
-      ? passedItems
-      : [{ name: '', qty: 1, price: passedPrice > 0 ? passedPrice : 0 }]
+    passedItems && passedItems.length > 0 ? passedItems : []
   );
   const [deliveryHall, setDeliveryHall] = useState<string>(user?.dorm_hall ?? 'Hall I');
   const [note, setNote] = useState('');
