@@ -2,6 +2,8 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../constants/theme';
+import AppHeader from '../components/AppHeader';
 import { getDelivererQueue } from '../api/orders';
 import OrderCard from '../components/OrderCard';
 import { useAuth } from '../context/AuthContext';
@@ -10,15 +12,11 @@ import { RootStackParamList, Order } from '../types';
 type Props = NativeStackScreenProps<RootStackParamList, 'DelivererQueue'>;
 
 export default function DelivererQueueScreen({ navigation }: Props) {
+  const t = useTheme();
   const { user } = useAuth();
-  const isDark = user?.dark_mode ?? false;
-  
-  const colors = isDark
-    ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460' }
-    : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366' };
 
-const [orders, setOrders] = useState<Order[]>([]);
-const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sortMode, setSortMode] = useState<'preference' | 'time'>('preference');
 
@@ -86,29 +84,22 @@ const [loading, setLoading] = useState(true);
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={[styles.center, { backgroundColor: t.colors.bg }]}>
+        <ActivityIndicator size="large" color={t.colors.accent} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      {/* Header */}
-      <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={[styles.backText, { color: colors.text }]}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Available Orders</Text>
-        <View style={{ width: 32 }} />
-      </View>
+    <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
+      <AppHeader title="Available Orders" onBack={navigation.goBack} />
 
       {/* Sort Toggle */}
-      <View style={[styles.toggleContainer, { backgroundColor: isDark ? '#2a2a40' : '#e0e0e0' }]}>
+      <View style={[styles.toggleContainer, { backgroundColor: t.colors.border }]}>
         <TouchableOpacity
           style={[
             styles.toggleBtn,
-            sortMode === 'preference' && { backgroundColor: colors.accent },
+            sortMode === 'preference' && { backgroundColor: t.colors.accent },
           ]}
           onPress={() => setSortMode('preference')}
           activeOpacity={0.8}
@@ -116,7 +107,7 @@ const [loading, setLoading] = useState(true);
           <Text
             style={[
               styles.toggleText,
-              { color: sortMode === 'preference' ? '#fff' : colors.text },
+              { color: sortMode === 'preference' ? '#fff' : t.colors.text },
             ]}
           >
             By Preference
@@ -126,7 +117,7 @@ const [loading, setLoading] = useState(true);
         <TouchableOpacity
           style={[
             styles.toggleBtn,
-            sortMode === 'time' && { backgroundColor: colors.accent },
+            sortMode === 'time' && { backgroundColor: t.colors.accent },
           ]}
           onPress={() => setSortMode('time')}
           activeOpacity={0.8}
@@ -134,7 +125,7 @@ const [loading, setLoading] = useState(true);
           <Text
             style={[
               styles.toggleText,
-              { color: sortMode === 'time' ? '#fff' : colors.text },
+              { color: sortMode === 'time' ? '#fff' : t.colors.text },
             ]}
           >
             By Time
@@ -144,7 +135,7 @@ const [loading, setLoading] = useState(true);
 
       {sortedOrders.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: colors.sub }]}>
+          <Text style={[styles.emptyText, { color: t.colors.subtext }]}>
             No orders available for delivery right now
           </Text>
         </View>
@@ -156,7 +147,6 @@ const [loading, setLoading] = useState(true);
             <OrderCard
               order={item}
               onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
-              colors={colors}
             />
           )}
           contentContainerStyle={styles.list}
@@ -179,23 +169,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    padding: 16,
-    paddingTop: 60, // approximate status bar height
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(150, 150, 150, 0.1)',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  backButton: {
-    padding: 8,
-  },
-  backText: {
-    fontSize: 24,
-    fontWeight: 'bold',
   },
   toggleContainer: {
     flexDirection: 'row',

@@ -116,4 +116,5 @@ export type RootStackParamList = {
   ChatScreen: { orderId: string };
   MyOrders: undefined;
   MyDeliveries: undefined;
+  Leaderboard: { initialTab?: 'orderers' | 'deliverers' } | undefined;
 };

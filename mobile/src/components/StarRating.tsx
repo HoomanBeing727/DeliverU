@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../constants/theme';
 
 interface Props {
   rating: number;
@@ -18,9 +19,12 @@ export default function StarRating({
   disabled = false,
   size = 24,
   maxStars = 5,
-  filledColor = '#FFD700',
-  emptyColor = '#CCCCCC',
+  filledColor,
+  emptyColor,
 }: Props) {
+  const t = useTheme();
+  const actualFilled = filledColor ?? t.colors.warning;
+  const actualEmpty = emptyColor ?? t.colors.muted;
   const stars = [];
 
   for (let i = 1; i <= maxStars; i++) {
@@ -35,7 +39,7 @@ export default function StarRating({
         <Ionicons
           name={filled ? 'star' : 'star-outline'}
           size={size}
-          color={filled ? filledColor : emptyColor}
+          color={filled ? actualFilled : actualEmpty}
           style={{ marginHorizontal: 2 }}
         />
       </TouchableOpacity>

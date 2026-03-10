@@ -14,17 +14,15 @@ import { useAuth } from '../context/AuthContext';
 import { createOrder, CreateOrderPayload } from '../api/orders';
 import { RootStackParamList, OrderItem } from '../types';
 import { HKUST_HALLS } from '../constants/dorms';
+import { useTheme } from '../constants/theme';
+import AppHeader from '../components/AppHeader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OrderConfirm'>;
 
 export default function OrderConfirmScreen({ navigation, route }: Props) {
   const { canteen, qrCodeImage, qrCodeData, totalPrice: passedPrice, items: passedItems } = route.params;
   const { user } = useAuth();
-  
-  const isDark = user?.dark_mode ?? false;
-  const colors = isDark
-    ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460', input: '#1e2a45', border: '#2a3a5c' }
-    : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366', input: '#fff', border: '#ddd' };
+  const t = useTheme();
 
   const [items, setItems] = useState<OrderItem[]>(
     passedItems && passedItems.length > 0 ? passedItems : []
@@ -63,12 +61,12 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
       Alert.alert('Error', 'Please add at least one item');
       return;
     }
-    
+
     if (totalPrice <= 0) {
       Alert.alert('Error', 'Total price must be greater than 0');
       return;
     }
-    
+
     setLoading(true);
     try {
       const payload: CreateOrderPayload = {
@@ -95,70 +93,63 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={[styles.backText, { color: colors.text }]}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Confirm Order</Text>
-      </View>
+    <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
+      <AppHeader title="Confirm Order" onBack={navigation.goBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         {/* Canteen Section */}
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.sub }]}>Canteen</Text>
-          <Text style={[styles.canteenName, { color: colors.text }]}>{canteen}</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Canteen</Text>
+          <Text style={[styles.canteenName, { color: t.colors.text }]}>{canteen}</Text>
         </View>
 
         {/* Order Items Section */}
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.sub }]}>Order Items</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Order Items</Text>
           {items.map((item, index) => (
             <View key={index} style={styles.itemRow}>
               <TextInput
-                style={[styles.input, { flex: 2, backgroundColor: colors.input, color: colors.text, borderColor: colors.border }]}
+                style={[styles.input, { flex: 2, backgroundColor: t.colors.bg, color: t.colors.text, borderColor: t.colors.border }]}
                 placeholder="Item Name"
-                placeholderTextColor={colors.sub}
+                placeholderTextColor={t.colors.subtext}
                 value={item.name}
                 onChangeText={(text) => updateItem(index, 'name', text)}
               />
               <TextInput
-                style={[styles.input, { flex: 0.5, backgroundColor: colors.input, color: colors.text, borderColor: colors.border }]}
+                style={[styles.input, { flex: 0.5, backgroundColor: t.colors.bg, color: t.colors.text, borderColor: t.colors.border }]}
                 placeholder="Qty"
-                placeholderTextColor={colors.sub}
+                placeholderTextColor={t.colors.subtext}
                 keyboardType="numeric"
                 value={item.qty.toString()}
                 onChangeText={(text) => updateItem(index, 'qty', text)}
               />
               <TextInput
-                style={[styles.input, { flex: 1, backgroundColor: colors.input, color: colors.text, borderColor: colors.border }]}
+                style={[styles.input, { flex: 1, backgroundColor: t.colors.bg, color: t.colors.text, borderColor: t.colors.border }]}
                 placeholder="Price"
-                placeholderTextColor={colors.sub}
+                placeholderTextColor={t.colors.subtext}
                 keyboardType="numeric"
                 value={item.price.toString()}
                 onChangeText={(text) => updateItem(index, 'price', text)}
               />
               <TouchableOpacity onPress={() => removeItem(index)} style={styles.removeBtn}>
-                <Text style={{ color: colors.sub, fontSize: 18 }}>✕</Text>
+                <Text style={{ color: t.colors.subtext, fontSize: 18 }}>✕</Text>
               </TouchableOpacity>
             </View>
           ))}
           <TouchableOpacity onPress={addItem} style={styles.addItemBtn}>
-            <Text style={{ color: colors.accent, fontWeight: 'bold' }}>+ Add Item</Text>
+            <Text style={{ color: t.colors.accent, fontWeight: 'bold' }}>+ Add Item</Text>
           </TouchableOpacity>
         </View>
 
         {/* Total Price Section */}
-        <View style={[styles.section, { backgroundColor: colors.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-          <Text style={[styles.sectionTitle, { color: colors.sub, marginBottom: 0 }]}>Total Price</Text>
-          <Text style={[styles.totalPrice, { color: colors.accent }]}>${totalPrice.toFixed(1)}</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+          <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>Total Price</Text>
+          <Text style={[styles.totalPrice, { color: t.colors.accent }]}>${totalPrice.toFixed(1)}</Text>
         </View>
 
         {/* Delivery Hall Section */}
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.sub }]}>Delivery Hall</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Delivery Hall</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hallScroll}>
             {HKUST_HALLS.map((hall) => {
               const selected = deliveryHall === hall;
@@ -167,14 +158,14 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
                   key={hall}
                   style={[
                     styles.hallChip,
-                    { 
-                      backgroundColor: selected ? colors.accent : colors.input,
-                      borderColor: colors.border 
+                    {
+                      backgroundColor: selected ? t.colors.accent : t.colors.bg,
+                      borderColor: t.colors.border
                     }
                   ]}
                   onPress={() => setDeliveryHall(hall)}
                 >
-                  <Text style={{ color: selected ? '#fff' : colors.text }}>{hall}</Text>
+                  <Text style={{ color: selected ? '#fff' : t.colors.text }}>{hall}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -182,12 +173,12 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
         </View>
 
         {/* Note Section */}
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.sub }]}>Note</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Note</Text>
           <TextInput
-            style={[styles.noteInput, { backgroundColor: colors.input, color: colors.text, borderColor: colors.border }]}
+            style={[styles.noteInput, { backgroundColor: t.colors.bg, color: t.colors.text, borderColor: t.colors.border }]}
             placeholder="Add a note for the deliverer (optional)"
-            placeholderTextColor={colors.sub}
+            placeholderTextColor={t.colors.subtext}
             multiline
             value={note}
             onChangeText={setNote}
@@ -195,20 +186,19 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
         </View>
 
         {/* QR Code Status */}
-        <View style={[styles.section, { backgroundColor: colors.card, alignItems: 'center' }]}>
+        <View style={[styles.section, { backgroundColor: t.colors.card, alignItems: 'center' }]}>
           {qrCodeImage ? (
             <Text style={{ color: '#4caf50', fontWeight: 'bold' }}>QR Code Captured ✓</Text>
           ) : (
-            <Text style={{ color: colors.sub }}>No QR code captured</Text>
+            <Text style={{ color: t.colors.subtext }}>No QR code captured</Text>
           )}
         </View>
-
       </ScrollView>
 
       {/* Footer Button */}
-      <View style={[styles.footer, { backgroundColor: colors.bg, borderTopColor: colors.border }]}>
+      <View style={[styles.footer, { backgroundColor: t.colors.bg, borderTopColor: t.colors.border }]}>
         <TouchableOpacity
-          style={[styles.placeOrderBtn, { backgroundColor: colors.accent, opacity: loading ? 0.7 : 1 }]}
+          style={[styles.placeOrderBtn, { backgroundColor: t.colors.accent, opacity: loading ? 0.7 : 1 }]}
           onPress={handleSubmit}
           disabled={loading}
         >
@@ -226,26 +216,6 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    padding: 16,
-    paddingTop: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(150, 150, 150, 0.1)',
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  backText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
   },
   scrollContent: {
     padding: 16,

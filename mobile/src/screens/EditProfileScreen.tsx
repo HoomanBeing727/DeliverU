@@ -14,7 +14,9 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../constants/theme';
 import { setupProfile } from '../api/users';
+import AppHeader from '../components/AppHeader';
 import ChipSelector from '../components/ChipSelector';
 import RadioGroup from '../components/RadioGroup';
 import {
@@ -29,11 +31,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
 export default function EditProfileScreen({ navigation }: Props) {
   const { user, refreshUser } = useAuth();
+  const t = useTheme();
   
-  const isDark = user?.dark_mode ?? false;
-  const colors = isDark 
-    ? { background: '#1a1a2e', card: '#16213e', text: '#e0e0e0', inputBg: '#2a2a40', border: '#333' } 
-    : { background: '#f0f4f8', card: '#ffffff', text: '#1a1a2e', inputBg: '#ffffff', border: '#ddd' };
 
   const [nickname, setNickname] = useState(user?.nickname ?? '');
   const [dormHall, setDormHall] = useState(user?.dorm_hall ?? '');
@@ -136,23 +135,17 @@ export default function EditProfileScreen({ navigation }: Props) {
   }
 
   return (
-    <View style={[styles.mainContainer, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={[styles.backText, { color: colors.text }]}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+    <View style={[styles.mainContainer, { backgroundColor: t.colors.bg }]}>
+      <AppHeader title="Edit Profile" onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={[styles.label, { color: colors.text }]}>Nickname</Text>
+          <Text style={[styles.label, { color: t.colors.text }]}>Nickname</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text, borderColor: colors.border }]}
+            style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
             placeholder="Your display name"
             placeholderTextColor="#999"
             value={nickname}
@@ -189,7 +182,7 @@ export default function EditProfileScreen({ navigation }: Props) {
           />
 
           <View style={styles.switchRow}>
-            <Text style={[styles.switchLabel, { color: colors.text }]}>I also want to deliver</Text>
+            <Text style={[styles.switchLabel, { color: t.colors.text }]}>I also want to deliver</Text>
             <Switch
               value={isDeliverer}
               onValueChange={setIsDeliverer}
@@ -233,26 +226,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 60,
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
+
   content: {
     padding: 24,
     paddingBottom: 40,

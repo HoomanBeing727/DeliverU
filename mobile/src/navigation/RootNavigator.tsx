@@ -18,6 +18,7 @@ import MyOrdersScreen from '../screens/MyOrdersScreen';
 import MyDeliveriesScreen from '../screens/MyDeliveriesScreen';
 
 import ChatScreen from '../screens/ChatScreen';
+import LeaderboardScreen from '../screens/LeaderboardScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
@@ -53,6 +54,7 @@ export default function RootNavigator() {
           <Stack.Screen name="MyDeliveries" component={MyDeliveriesScreen} />
           <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
           <Stack.Screen name="ChatScreen" component={ChatScreen} />
+          <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
         </>
 
       )}

@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Order } from '../types';
+import { useTheme } from '../constants/theme';
 
 interface Props {
   order: Order;
   onPress: () => void;
-  colors: { bg: string; card: string; text: string; sub: string; accent: string };
 }
 
-export default function OrderCard({ order, onPress, colors }: Props) {
+export default function OrderCard({ order, onPress }: Props) {
+  const t = useTheme();
   const itemCount = order.items.reduce((acc, item) => acc + item.qty, 0);
 
   const getStatusColor = (status: string) => {
@@ -18,7 +19,7 @@ export default function OrderCard({ order, onPress, colors }: Props) {
       case 'picked_up': return '#9c27b0';
       case 'delivered': return '#4caf50';
       case 'cancelled': return '#f44336';
-      default: return colors.sub;
+      default: return t.colors.subtext;
     }
   };
 
@@ -44,12 +45,12 @@ export default function OrderCard({ order, onPress, colors }: Props) {
 
   return (
     <TouchableOpacity 
-      style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]} 
+      style={[styles.card, { backgroundColor: t.colors.card }, t.shadow.card]}
       onPress={onPress}
       activeOpacity={0.7}
     >
       <View style={styles.header}>
-        <Text style={[styles.canteen, { color: colors.text }]}>{order.canteen}</Text>
+        <Text style={[styles.canteen, { color: t.colors.text }]}>{order.canteen}</Text>
         <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}> 
           <Text style={[styles.statusText, { color: statusColor }]}>
             {order.status.replace('_', ' ').toUpperCase()}
@@ -59,34 +60,34 @@ export default function OrderCard({ order, onPress, colors }: Props) {
 
       <View style={styles.content}>
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.sub }]}>Items</Text>
-          <Text style={[styles.value, { color: colors.text }]}>
+          <Text style={[styles.label, { color: t.colors.subtext }]}>Items</Text>
+          <Text style={[styles.value, { color: t.colors.text }]}>
             {itemCount} item{itemCount !== 1 ? 's' : ''}
           </Text>
         </View>
         
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.sub }]}>Total</Text>
-          <Text style={[styles.price, { color: colors.accent }]}>
+          <Text style={[styles.label, { color: t.colors.subtext }]}>Total</Text>
+          <Text style={[styles.price, { color: t.colors.accent }]}>
             HK${order.total_price.toFixed(1)}
           </Text>
         </View>
 
         <View style={styles.row}>
-          <Text style={[styles.label, { color: colors.sub }]}>To</Text>
-          <Text style={[styles.value, { color: colors.text }]}>
+          <Text style={[styles.label, { color: t.colors.subtext }]}>To</Text>
+          <Text style={[styles.value, { color: t.colors.text }]}>
             {order.delivery_hall}
           </Text>
         </View>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: colors.bg }]} />
+      <View style={[styles.divider, { backgroundColor: t.colors.bg }]} />
 
       <View style={styles.footer}>
-        <Text style={[styles.meta, { color: colors.sub }]}>
+        <Text style={[styles.meta, { color: t.colors.subtext }]}>
           by {order.orderer_nickname}
         </Text>
-        <Text style={[styles.meta, { color: colors.sub }]}>
+        <Text style={[styles.meta, { color: t.colors.subtext }]}>
           {getTimeAgo(order.created_at)}
         </Text>
       </View>

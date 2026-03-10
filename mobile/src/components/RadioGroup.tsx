@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTheme } from '../constants/theme';
 
 interface RadioOption {
   value: string;
@@ -14,21 +15,22 @@ interface RadioGroupProps {
 }
 
 export default function RadioGroup({ label, options, selected, onSelect }: RadioGroupProps) {
+  const t = useTheme();
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[styles.container, { marginBottom: t.spacing.lg }]}>
+      <Text style={[styles.label, { color: t.colors.text, marginBottom: t.spacing.sm }]}>{label}</Text>
       {options.map((opt) => {
         const isSelected = selected === opt.value;
         return (
           <TouchableOpacity
             key={opt.value}
-            style={styles.row}
+            style={[styles.row, { paddingVertical: t.spacing.sm }]}
             onPress={() => onSelect(opt.value)}
           >
-            <View style={[styles.radio, isSelected && styles.radioSelected]}>
-              {isSelected && <View style={styles.radioInner} />}
+            <View style={[styles.radio, { borderColor: t.colors.border }, isSelected && { borderColor: t.colors.accent }]}>
+              {isSelected && <View style={[styles.radioInner, { backgroundColor: t.colors.accent }]} />}
             </View>
-            <Text style={styles.optionText}>{opt.label}</Text>
+            <Text style={[styles.optionText, { color: t.colors.text }]}>{opt.label}</Text>
           </TouchableOpacity>
         );
       })}
@@ -37,41 +39,30 @@ export default function RadioGroup({ label, options, selected, onSelect }: Radio
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 20,
-  },
+  container: {},
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
   },
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#ccc',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
-  },
-  radioSelected: {
-    borderColor: '#003366',
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#003366',
   },
   optionText: {
     fontSize: 15,
-    color: '#333',
   },
 });

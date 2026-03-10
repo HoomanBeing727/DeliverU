@@ -4,23 +4,20 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
-  StatusBar,
   ScrollView,
-} from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+  } from 'react-native';
+  import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../constants/theme';
+import AppHeader from '../components/AppHeader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CanteenSelect'>;
 
 export default function CanteenSelectScreen({ navigation }: Props) {
   const { user } = useAuth();
-  const isDark = user?.dark_mode ?? false;
+  const t = useTheme();
 
-  const colors = isDark
-    ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460' }
-    : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366' };
 
   const canteens = [
     {
@@ -44,37 +41,27 @@ export default function CanteenSelectScreen({ navigation }: Props) {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
-      <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Select Canteen</Text>
-        <View style={styles.headerRight} />
-      </View>
+    <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
+      <AppHeader title="Select Canteen" onBack={() => navigation.goBack()} />
+
 
       <ScrollView contentContainerStyle={styles.content}>
         {canteens.map((c) => (
           <TouchableOpacity
             key={c.canteen}
-            style={[styles.card, { backgroundColor: colors.card }]}
+            style={[styles.card, { backgroundColor: t.colors.card, ...t.shadow.card }]}
             onPress={() => navigation.navigate('CanteenWebView', { canteen: c.canteen, url: c.url })}
             activeOpacity={0.8}
           >
             <View>
-              <Text style={[styles.canteenName, { color: colors.text }]}>{c.name}</Text>
-              <Text style={[styles.canteenDesc, { color: colors.sub }]}>{c.desc}</Text>
+              <Text style={[styles.canteenName, { color: t.colors.text }]}>{c.name}</Text>
+              <Text style={[styles.canteenDesc, { color: t.colors.subtext }]}>{c.desc}</Text>
             </View>
-            <Text style={[styles.arrow, { color: colors.sub }]}>›</Text>
+            <Text style={[styles.arrow, { color: t.colors.subtext }]}>›</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -115,11 +102,8 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    // Shadow applied via t.shadow.card spread in component
+    elevation: 2,
   },
   canteenName: {
     fontSize: 18,

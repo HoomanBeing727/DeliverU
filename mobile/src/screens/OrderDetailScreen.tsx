@@ -25,32 +25,14 @@ import {
   deliverOrder, 
   cancelOrder 
 } from '../api/orders';
-
+import { useTheme } from '../constants/theme';
+import AppHeader from '../components/AppHeader';
 type Props = NativeStackScreenProps<RootStackParamList, 'OrderDetail'>;
-
-const COLORS_LIGHT = { 
-  bg: '#f5f5f5', 
-  card: '#fff', 
-  text: '#333', 
-  sub: '#666', 
-  accent: '#003366',
-  error: '#f44336',
-  success: '#4caf50'
-};
-
-const COLORS_DARK = { 
-  bg: '#1a1a2e', 
-  card: '#16213e', 
-  text: '#eee', 
-  sub: '#aaa', 
-  accent: '#0f3460',
-  error: '#ff6b6b',
-  success: '#66bb6a'
-};
 
 export default function OrderDetailScreen({ navigation, route }: Props) {
   const { orderId } = route.params;
   const { user } = useAuth();
+  const t = useTheme();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -61,9 +43,6 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
   const [submittingRating, setSubmittingRating] = useState(false);
   const { showToast } = useToast();
   const [prevStatus, setPrevStatus] = useState<OrderStatus | null>(null);
-
-  const isDark = user?.dark_mode ?? false;
-  const colors = isDark ? COLORS_DARK : COLORS_LIGHT;
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -209,16 +188,16 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={[styles.center, { backgroundColor: t.colors.bg }]}>
+        <ActivityIndicator size="large" color={t.colors.accent} />
       </View>
     );
   }
 
   if (!order) {
     return (
-      <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <Text style={{ color: colors.text }}>Order not found</Text>
+      <View style={[styles.center, { backgroundColor: t.colors.bg }]}>
+        <Text style={{ color: t.colors.text }}>Order not found</Text>
       </View>
     );
   }
@@ -233,7 +212,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
       case 'picked_up': return '#9c27b0';
       case 'delivered': return '#4caf50';
       case 'cancelled': return '#f44336';
-      default: return colors.sub;
+      default: return t.colors.subtext;
     }
   };
 
@@ -258,12 +237,9 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
     const isCancelled = state === 'cancelled';
     const isFuture = state === 'future';
 
-    let dotColor = colors.sub;
-    if (isCompleted || isActive) dotColor = colors.success;
-    if (isCancelled) dotColor = colors.error;
-    if (isFuture) dotColor = colors.sub;
+    const dotColor = isCompleted || isActive ? t.colors.success : isCancelled ? t.colors.danger : t.colors.subtext;
 
-    const lineColor = isCompleted ? colors.success : colors.sub;
+    const lineColor = isCompleted ? t.colors.success : t.colors.subtext;
 
     return (
       <View key={label} style={styles.timelineItem}>
@@ -294,27 +270,20 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         <View style={styles.timelineContent}>
           <Text style={[
             styles.timelineLabel, 
-            { color: (isActive || isCompleted) ? colors.text : colors.sub },
+            { color: (isActive || isCompleted) ? t.colors.text : t.colors.subtext },
             isActive && { fontWeight: 'bold' }
           ]}>
             {label}
           </Text>
-          {date && <Text style={[styles.timelineDate, { color: colors.sub }]}>{formatDate(date)}</Text>}
+          {date && <Text style={[styles.timelineDate, { color: t.colors.subtext }]}>{formatDate(date)}</Text>}
         </View>
       </View>
     );
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.bg }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={[styles.backArrow, { color: colors.text }]}>←</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Order Details</Text>
-        <View style={{ width: 40 }} /> 
-      </View>
+    <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
+      <AppHeader title="Order Details" onBack={navigation.goBack} />
 
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
@@ -328,54 +297,54 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         </View>
 
         {/* Main Info Card */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <Text style={[styles.canteenTitle, { color: colors.text }]}>{order.canteen}</Text>
-          <View style={[styles.divider, { backgroundColor: colors.bg }]} />
+        <View style={[styles.card, { backgroundColor: t.colors.card }]}>
+          <Text style={[styles.canteenTitle, { color: t.colors.text }]}>{order.canteen}</Text>
+          <View style={[styles.divider, { backgroundColor: t.colors.bg }]} />
           
           {order.items.map((item, idx) => (
             <View key={idx} style={styles.itemRow}>
               <View style={styles.itemInfo}>
-                <Text style={[styles.itemQty, { color: colors.accent }]}>{item.qty}x</Text>
-                <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
+                <Text style={[styles.itemQty, { color: t.colors.accent }]}>{item.qty}x</Text>
+                <Text style={[styles.itemName, { color: t.colors.text }]}>{item.name}</Text>
               </View>
-              <Text style={[styles.itemPrice, { color: colors.text }]}>${item.price}</Text>
+              <Text style={[styles.itemPrice, { color: t.colors.text }]}>${item.price}</Text>
             </View>
           ))}
 
-          <View style={[styles.divider, { backgroundColor: colors.bg, marginTop: 12 }]} />
+          <View style={[styles.divider, { backgroundColor: t.colors.bg, marginTop: 12 }]} />
           
           <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
-            <Text style={[styles.totalPrice, { color: colors.accent }]}>HK${order.total_price.toFixed(1)}</Text>
+            <Text style={[styles.totalLabel, { color: t.colors.text }]}>Total</Text>
+            <Text style={[styles.totalPrice, { color: t.colors.accent }]}>HK${order.total_price.toFixed(1)}</Text>
           </View>
         </View>
 
         {/* Delivery Info */}
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.sub }]}>DELIVERY DETAILS</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>DELIVERY DETAILS</Text>
           
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: colors.sub }]}>Destination</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{order.delivery_hall}</Text>
+            <Text style={[styles.detailLabel, { color: t.colors.subtext }]}>Destination</Text>
+            <Text style={[styles.detailValue, { color: t.colors.text }]}>{order.delivery_hall}</Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: colors.sub }]}>Note</Text>
-            <Text style={[styles.detailValue, { color: colors.text, fontStyle: order.note ? 'normal' : 'italic' }]}>
+            <Text style={[styles.detailLabel, { color: t.colors.subtext }]}>Note</Text>
+            <Text style={[styles.detailValue, { color: t.colors.text, fontStyle: order.note ? 'normal' : 'italic' }]}>
               {order.note || 'None'}
             </Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: colors.sub }]}>Orderer</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>
+            <Text style={[styles.detailLabel, { color: t.colors.subtext }]}>Orderer</Text>
+            <Text style={[styles.detailValue, { color: t.colors.text }]}>
               {order.orderer_nickname} {isOrderer ? '(You)' : ''}
             </Text>
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: colors.sub }]}>Deliverer</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>
+            <Text style={[styles.detailLabel, { color: t.colors.subtext }]}>Deliverer</Text>
+            <Text style={[styles.detailValue, { color: t.colors.text }]}>
               {order.deliverer_nickname || 'Waiting for pickup...'} {isDeliverer ? '(You)' : ''}
             </Text>
           </View>
@@ -383,8 +352,8 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
         {/* QR Code Section - Show to orderer and deliverer */}
         {order.qr_code_image && (isOrderer || isDeliverer) && (
-          <View style={[styles.section, { backgroundColor: colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: colors.sub }]}>ORDER QR CODE</Text>
+          <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+            <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>ORDER QR CODE</Text>
             <View style={styles.qrContainer}>
               <Image
                 source={{ uri: order.qr_code_image }}
@@ -396,8 +365,8 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         )}
 
         {/* Timeline */}
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: colors.sub }]}>TIMELINE</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>TIMELINE</Text>
           <View style={styles.timeline}>
             {(() => {
               if (order.status === 'cancelled') {
@@ -430,9 +399,9 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
         {/* Chat Button - Only for accepted/picked_up orders with deliverer */}
         {(order.status === 'accepted' || order.status === 'picked_up') && order.deliverer_id && (
-          <View style={[styles.section, { backgroundColor: colors.card }]}>
+          <View style={[styles.section, { backgroundColor: t.colors.card }]}>
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: colors.accent }]}
+              style={[styles.button, { backgroundColor: t.colors.accent }]}
               onPress={() => navigation.navigate('ChatScreen', { orderId: order.id })}
             >
               <Text style={styles.buttonText}>Open Chat</Text>
@@ -442,24 +411,24 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
         {/* Rating Section - Only for delivered orders */}
         {order.status === 'delivered' && (
-          <View style={[styles.section, { backgroundColor: colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: colors.sub }]}>RATING</Text>
+          <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+            <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>RATING</Text>
             
             {userRating ? (
               <View>
-                <Text style={[styles.ratingLabel, { color: colors.text }]}>You rated this order:</Text>
+                <Text style={[styles.ratingLabel, { color: t.colors.text }]}>You rated this order:</Text>
                 <View style={styles.ratingContainer}>
                   <StarRating rating={userRating.stars} disabled={true} size={32} />
                 </View>
                 {userRating.feedback && (
-                  <View style={[styles.feedbackContainer, { backgroundColor: colors.bg }]}>
-                    <Text style={[styles.feedbackText, { color: colors.text }]}>"{userRating.feedback}"</Text>
+                  <View style={[styles.feedbackContainer, { backgroundColor: t.colors.bg }]}>
+                    <Text style={[styles.feedbackText, { color: t.colors.text }]}>"{userRating.feedback}"</Text>
                   </View>
                 )}
               </View>
             ) : (
               <View>
-                <Text style={[styles.ratingLabel, { color: colors.text }]}>Rate your experience:</Text>
+                <Text style={[styles.ratingLabel, { color: t.colors.text }]}>Rate your experience:</Text>
                 <View style={styles.ratingContainer}>
                   <StarRating 
                     rating={ratingStars} 
@@ -470,12 +439,12 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
                 
                 <TextInput
                   style={[styles.input, { 
-                    backgroundColor: colors.bg, 
-                    color: colors.text,
-                    borderColor: colors.sub + '40'
+                    backgroundColor: t.colors.bg, 
+                    color: t.colors.text,
+                    borderColor: t.colors.subtext + '40'
                   }]}
                   placeholder="Optional feedback..."
-                  placeholderTextColor={colors.sub}
+                  placeholderTextColor={t.colors.subtext}
                   value={ratingFeedback}
                   onChangeText={setRatingFeedback}
                   multiline
@@ -483,7 +452,7 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
                 />
                 
                 <TouchableOpacity
-                  style={[styles.submitButton, { backgroundColor: colors.accent }]}
+                  style={[styles.submitButton, { backgroundColor: t.colors.accent }]}
                   onPress={handleSubmitRating}
                   disabled={submittingRating}
                 >
@@ -501,14 +470,14 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
       </ScrollView>
 
       {/* Action Buttons */}
-      <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.bg }]}>
+      <View style={[styles.footer, { backgroundColor: t.colors.card, borderTopColor: t.colors.bg }]}>
         {actionLoading ? (
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={t.colors.accent} />
         ) : (
           <>
             {!isOrderer && order.status === 'pending' && (
               <TouchableOpacity 
-                style={[styles.button, { backgroundColor: colors.accent }]}
+                style={[styles.button, { backgroundColor: t.colors.accent }]}
                 onPress={() => handleAction('accepted', acceptOrder)}
               >
                 <Text style={styles.buttonText}>Accept Order</Text>
@@ -535,10 +504,10 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
             {isOrderer && (order.status === 'pending' || order.status === 'accepted') && (
               <TouchableOpacity 
-                style={[styles.button, { backgroundColor: colors.bg, borderColor: colors.error, borderWidth: 1 }]}
+                style={[styles.button, { backgroundColor: t.colors.bg, borderColor: t.colors.danger, borderWidth: 1 }]}
                 onPress={() => handleAction('cancelled', cancelOrder, 'Are you sure you want to cancel this order?')}
               >
-                <Text style={[styles.buttonText, { color: colors.error }]}>Cancel Order</Text>
+                <Text style={[styles.buttonText, { color: t.colors.danger }]}>Cancel Order</Text>
               </TouchableOpacity>
             )}
           </>
@@ -556,26 +525,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: 8,
-  },
-  backArrow: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,

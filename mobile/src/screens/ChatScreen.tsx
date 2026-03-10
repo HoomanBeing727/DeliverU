@@ -8,22 +8,21 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  useColorScheme,
-  SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, ChatMessage } from '../types';
 import { getMessages, sendMessage } from '../api/chat';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../constants/theme';
+import AppHeader from '../components/AppHeader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChatScreen'>;
 
 export default function ChatScreen({ route, navigation }: Props) {
   const { orderId } = route.params;
   const { user } = useAuth();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const t = useTheme();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
@@ -31,19 +30,6 @@ export default function ChatScreen({ route, navigation }: Props) {
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const lastFetchedRef = useRef<string | undefined>(undefined);
-
-  const colors = {
-    background: isDark ? '#121212' : '#F2F2F7',
-    text: isDark ? '#FFFFFF' : '#000000',
-    inputBackground: isDark ? '#1E1E1E' : '#FFFFFF',
-    inputText: isDark ? '#FFFFFF' : '#000000',
-    myBubble: '#007AFF',
-    myText: '#FFFFFF',
-    otherBubble: isDark ? '#2C2C2E' : '#E5E5EA',
-    otherText: isDark ? '#FFFFFF' : '#000000',
-    systemText: isDark ? '#8E8E93' : '#8E8E93',
-    border: isDark ? '#38383A' : '#C6C6C8',
-  };
 
   const fetchMessages = async () => {
     try {
@@ -98,7 +84,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     if (item.message_type === 'system') {
       return (
         <View style={styles.systemMessageContainer}>
-          <Text style={[styles.systemMessageText, { color: colors.systemText }]}>
+          <Text style={[styles.systemMessageText, { color: t.colors.subtext }]}>
             {item.content}
           </Text>
         </View>
@@ -113,17 +99,17 @@ export default function ChatScreen({ route, navigation }: Props) {
         isMe ? styles.myMessageRow : styles.otherMessageRow
       ]}>
         {!isMe && (
-          <Text style={[styles.senderName, { color: colors.systemText }]}>
+          <Text style={[styles.senderName, { color: t.colors.subtext }]}>
             {item.sender_nickname}
           </Text>
         )}
         <View style={[
           styles.bubble,
-          isMe ? { backgroundColor: colors.myBubble } : { backgroundColor: colors.otherBubble }
+          isMe ? { backgroundColor: t.colors.accent } : { backgroundColor: t.colors.card }
         ]}>
           <Text style={[
             styles.messageText,
-            isMe ? { color: colors.myText } : { color: colors.otherText }
+            isMe ? { color: '#FFFFFF' } : { color: t.colors.text }
           ]}>
             {item.content}
           </Text>
@@ -133,14 +119,9 @@ export default function ChatScreen({ route, navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackButton}>
-          <Text style={[styles.headerBackText, { color: colors.text }]}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Chat</Text>
-        <View style={styles.headerBackButton} />
-      </View>
+    <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
+      <AppHeader title="Chat" onBack={() => navigation.goBack()} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -148,7 +129,7 @@ export default function ChatScreen({ route, navigation }: Props) {
       >
         {loading && messages.length === 0 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.myBubble} />
+            <ActivityIndicator size="large" color={t.colors.accent} />
           </View>
         ) : (
           <FlatList
@@ -162,13 +143,13 @@ export default function ChatScreen({ route, navigation }: Props) {
           />
         )}
 
-        <View style={[styles.inputContainer, { backgroundColor: colors.inputBackground, borderTopColor: colors.border }]}>
+        <View style={[styles.inputContainer, { backgroundColor: t.colors.card, borderTopColor: t.colors.border }]}>
           <TextInput
-            style={[styles.input, { color: colors.inputText, backgroundColor: colors.background }]}
+            style={[styles.input, { color: t.colors.text, backgroundColor: t.colors.bg }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Type a message..."
-            placeholderTextColor={colors.systemText}
+            placeholderTextColor={t.colors.subtext}
             multiline
           />
           <TouchableOpacity
@@ -176,11 +157,11 @@ export default function ChatScreen({ route, navigation }: Props) {
             onPress={handleSend}
             disabled={!inputText.trim() || sending}
           >
-            <Text style={[styles.sendButtonText, { color: colors.myBubble }]}>Send</Text>
+            <Text style={[styles.sendButtonText, { color: t.colors.accent }]}>Send</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

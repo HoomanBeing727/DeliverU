@@ -7,6 +7,7 @@ import {
   Platform, 
   View
 } from 'react-native';
+import { useTheme } from '../constants/theme';
 
 export type ToastType = 'success' | 'info' | 'warning';
 
@@ -26,6 +27,7 @@ const COLORS = {
 const { width } = Dimensions.get('window');
 
 export default function Toast({ message, type, visible, onHide }: Props) {
+  const t = useTheme();
   const translateY = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
@@ -63,6 +65,9 @@ export default function Toast({ message, type, visible, onHide }: Props) {
         styles.container, 
         { 
           backgroundColor: COLORS[type],
+          paddingBottom: t.spacing.md,
+          paddingHorizontal: t.spacing.lg,
+          ...t.shadow.floating,
           transform: [{ translateY }]
         }
       ]}
@@ -80,15 +85,8 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 9999,
     paddingTop: Platform.OS === 'ios' ? 50 : 20, // Status bar padding
-    paddingBottom: 16,
-    paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
   },
   text: {
     color: '#fff',

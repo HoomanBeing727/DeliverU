@@ -13,11 +13,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../constants/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
 export default function RegisterScreen({ navigation }: Props) {
   const { register } = useAuth();
+  const t = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -70,17 +72,17 @@ export default function RegisterScreen({ navigation }: Props) {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: t.colors.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Register with your HKUST email</Text>
+        <Text style={[styles.title, { color: t.colors.accent }]}>Create Account</Text>
+        <Text style={[styles.subtitle, { color: t.colors.subtext }]}>Register with your HKUST email</Text>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
           placeholder="Email (@connect.ust.hk)"
-          placeholderTextColor="#999"
+          placeholderTextColor={t.colors.subtext}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -88,25 +90,25 @@ export default function RegisterScreen({ navigation }: Props) {
         />
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
           placeholder="Password (8–12 chars, letters & numbers, 1 uppercase)"
-          placeholderTextColor="#999"
+          placeholderTextColor={t.colors.subtext}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
           placeholder="Confirm Password"
-          placeholderTextColor="#999"
+          placeholderTextColor={t.colors.subtext}
           value={confirm}
           onChangeText={setConfirm}
           secureTextEntry
         />
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.button, { backgroundColor: t.colors.accent }, loading && styles.buttonDisabled]}
           onPress={handleRegister}
           disabled={loading}
         >
@@ -114,8 +116,8 @@ export default function RegisterScreen({ navigation }: Props) {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.linkText}>
-            Already have an account? <Text style={styles.linkBold}>Sign In</Text>
+          <Text style={[styles.linkText, { color: t.colors.subtext }]}>
+            Already have an account? <Text style={[styles.linkBold, { color: t.colors.accent }]}>Sign In</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -126,7 +128,6 @@ export default function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   inner: {
     flex: 1,
@@ -138,27 +139,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#003366',
   },
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
-    color: '#666',
     marginBottom: 32,
   },
   input: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
-    color: '#333',
   },
   button: {
-    backgroundColor: '#003366',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -174,11 +169,9 @@ const styles = StyleSheet.create({
   },
   linkText: {
     textAlign: 'center',
-    color: '#666',
     fontSize: 14,
   },
   linkBold: {
-    color: '#003366',
     fontWeight: '600',
   },
 });

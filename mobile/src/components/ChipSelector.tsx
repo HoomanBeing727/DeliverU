@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTheme } from '../constants/theme';
 
 interface ChipSelectorProps {
   label: string;
@@ -16,6 +17,7 @@ export default function ChipSelector({
   onToggle,
   multiple = true,
 }: ChipSelectorProps) {
+  const t = useTheme();
   function handlePress(value: string) {
     if (multiple) {
       onToggle(value);
@@ -25,18 +27,18 @@ export default function ChipSelector({
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.chipRow}>
+    <View style={[styles.container, { marginBottom: t.spacing.lg }]}>
+      <Text style={[styles.label, { color: t.colors.text, marginBottom: t.spacing.sm }]}>{label}</Text>
+      <View style={[styles.chipRow, { gap: t.spacing.sm }]}>
         {options.map((opt) => {
           const isSelected = selected.includes(opt);
           return (
             <TouchableOpacity
               key={opt}
-              style={[styles.chip, isSelected && styles.chipSelected]}
+              style={[styles.chip, { borderColor: t.colors.border, backgroundColor: t.colors.card }, isSelected && { backgroundColor: t.colors.accent, borderColor: t.colors.accent }]}
               onPress={() => handlePress(opt)}
             >
-              <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+              <Text style={[styles.chipText, { color: t.colors.text }, isSelected && { color: '#fff' }]}>
                 {opt}
               </Text>
             </TouchableOpacity>
@@ -48,37 +50,22 @@ export default function ChipSelector({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: 20,
-  },
+  container: {},
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#fff',
-  },
-  chipSelected: {
-    backgroundColor: '#003366',
-    borderColor: '#003366',
   },
   chipText: {
     fontSize: 13,
-    color: '#333',
-  },
-  chipTextSelected: {
-    color: '#fff',
   },
 });

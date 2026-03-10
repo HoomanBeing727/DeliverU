@@ -5,17 +5,17 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ActivityIndicator,
-  StatusBar,
   Modal,
   Image,
-} from 'react-native';
-import { WebView } from 'react-native-webview';
+  } from 'react-native';
+  import { WebView } from 'react-native-webview';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { OrderItem, RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../constants/theme';
+import AppHeader from '../components/AppHeader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CanteenWebView'>;
 
@@ -23,6 +23,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
   const { canteen, url } = route.params;
   const { user } = useAuth();
   const { showToast } = useToast();
+  const t = useTheme();
   const webViewRef = useRef<WebView>(null);
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
@@ -35,10 +36,6 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
   const captureTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasShownTakeawayToastRef = useRef(false);
 
-  const isDark = user?.dark_mode ?? false;
-  const colors = isDark
-    ? { bg: '#1a1a2e', card: '#16213e', text: '#eee', sub: '#aaa', accent: '#0f3460' }
-    : { bg: '#f5f5f5', card: '#fff', text: '#333', sub: '#666', accent: '#003366' };
 
   interface CaptureResult {
     type: string;
@@ -1088,23 +1085,15 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
     });
   }
 
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bg }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      
-      <View style={[styles.header, { borderBottomColor: colors.sub }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Text style={[styles.headerButtonText, { color: colors.text }]}>←</Text>
+    <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
+      <AppHeader title={canteen} onBack={() => navigation.goBack()} right={
+        <TouchableOpacity onPress={handleDone}>
+          <Text style={{ color: t.colors.accent, fontSize: 16, fontWeight: '600' }}>Done</Text>
         </TouchableOpacity>
-        
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          {canteen}
-        </Text>
-        
-        <TouchableOpacity onPress={handleDone} style={styles.headerButton}>
-          <Text style={[styles.doneButtonText, { color: colors.accent }]}>Done</Text>
-        </TouchableOpacity>
-      </View>
+      } />
+
 
       <WebView
         ref={webViewRef}
@@ -1115,47 +1104,47 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
         startInLoadingState={true}
         renderLoading={() => (
           <ActivityIndicator 
-            style={[styles.loader, { backgroundColor: colors.bg }]} 
+            style={[styles.loader, { backgroundColor: t.colors.bg }]}
             size="large" 
-            color={colors.accent} 
+            color={t.colors.accent}
           />
         )}
         onLoadEnd={() => setPageLoaded(true)}
         onMessage={handleMessage}
-        style={[styles.webView, { backgroundColor: colors.bg }]}
+        style={[styles.webView, { backgroundColor: t.colors.bg }]}
       />
 
       <Modal visible={showPreview} transparent animationType="fade">
         <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.sub }]}> 
-            <Text style={[styles.modalTitle, { color: colors.text }]}>QR Code Captured</Text>
+          <View style={[styles.modalCard, { backgroundColor: t.colors.card, borderColor: t.colors.subtext, ...t.shadow.floating }]}>
+            <Text style={[styles.modalTitle, { color: t.colors.text }]}>QR Code Captured</Text>
 
             {capturedImage ? (
               <Image source={{ uri: capturedImage }} style={styles.previewImage} resizeMode="contain" />
             ) : (
-              <View style={[styles.previewPlaceholder, { borderColor: colors.sub }]}> 
-                <Text style={[styles.previewPlaceholderText, { color: colors.sub }]}>No image captured</Text>
+              <View style={[styles.previewPlaceholder, { borderColor: t.colors.subtext }]}>
+                <Text style={[styles.previewPlaceholderText, { color: t.colors.subtext }]}>No image captured</Text>
               </View>
             )}
 
-            <Text style={[styles.modalDetailText, { color: colors.text }]}>QR Code ready for deliverer</Text>
+            <Text style={[styles.modalDetailText, { color: t.colors.text }]}>QR Code ready for deliverer</Text>
 
             {extractedPrice > 0 ? (
-              <Text style={[styles.modalPriceText, { color: colors.accent }]}>Price: $ {extractedPrice.toFixed(2)}</Text>
+              <Text style={[styles.modalPriceText, { color: t.colors.accent }]}>Price: $ {extractedPrice.toFixed(2)}</Text>
             ) : (
-              <Text style={[styles.modalPriceText, { color: colors.sub }]}>Price: Not found</Text>
+              <Text style={[styles.modalPriceText, { color: t.colors.subtext }]}>Price: Not found</Text>
             )}
 
             <View style={styles.modalButtonsRow}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.retryButton, { borderColor: colors.sub }]}
+                style={[styles.modalButton, styles.retryButton, { borderColor: t.colors.subtext }]}
                 onPress={handleRetry}
               >
-                <Text style={[styles.modalButtonText, { color: colors.text }]}>Retry</Text>
+                <Text style={[styles.modalButtonText, { color: t.colors.text }]}>Retry</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton, { backgroundColor: colors.accent }]}
+                style={[styles.modalButton, styles.confirmButton, { backgroundColor: t.colors.accent }]}
                 onPress={handleConfirm}
               >
                 <Text style={styles.confirmButtonText}>Confirm</Text>
@@ -1164,7 +1153,7 @@ export default function CanteenWebViewScreen({ navigation, route }: Props) {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -1219,11 +1208,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     borderWidth: 0.8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
+    ...StyleSheet.create({ shadow: {} }).shadow,
+    // Shadow applied via t.shadow.floating spread in component
   },
   modalTitle: {
     fontSize: 20,

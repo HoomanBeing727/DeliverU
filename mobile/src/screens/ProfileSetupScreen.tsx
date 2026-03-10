@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../constants/theme';
 import { setupProfile } from '../api/users';
+import AppHeader from '../components/AppHeader';
 import ChipSelector from '../components/ChipSelector';
 import RadioGroup from '../components/RadioGroup';
 import {
@@ -23,7 +25,7 @@ import {
 
 export default function ProfileSetupScreen() {
   const { refreshUser } = useAuth();
-
+  const t = useTheme();
   const [nickname, setNickname] = useState('');
   const [dormHall, setDormHall] = useState('');
   const [orderTimes, setOrderTimes] = useState<string[]>([]);
@@ -124,13 +126,13 @@ export default function ProfileSetupScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Set Up Your Profile</Text>
-      <Text style={styles.subtitle}>Tell us a bit about yourself</Text>
+    <ScrollView style={[styles.container, { backgroundColor: t.colors.bg }]} contentContainerStyle={styles.content}>
+      <Text style={[styles.title, { color: t.colors.accent }]}>Set Up Your Profile</Text>
+      <Text style={[styles.subtitle, { color: t.colors.subtext }]}>Tell us a bit about yourself</Text>
 
-      <Text style={styles.label}>Nickname</Text>
+      <Text style={[styles.label, { color: t.colors.text }]}>Nickname</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
         placeholder="Your display name"
         placeholderTextColor="#999"
         value={nickname}
@@ -167,7 +169,7 @@ export default function ProfileSetupScreen() {
       />
 
       <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>I also want to deliver</Text>
+        <Text style={[styles.switchLabel, { color: t.colors.text }]}>I also want to deliver</Text>
         <Switch
           value={isDeliverer}
           onValueChange={setIsDeliverer}
@@ -208,40 +210,32 @@ export default function ProfileSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   content: {
     padding: 24,
-    paddingTop: 60,
     paddingBottom: 40,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#003366',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 24,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    color: '#333',
   },
   switchRow: {
     flexDirection: 'row',
@@ -253,7 +247,6 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
   },
   button: {
     backgroundColor: '#003366',
@@ -271,3 +264,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
