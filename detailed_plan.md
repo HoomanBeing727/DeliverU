@@ -321,5 +321,192 @@ This means students **earn credits** by delivering others’ orders and **spend 
 
 ---
 
+
 **DeliverU** — Built by students, for students.  
 Making canteen and restaurant delivery smarter, fairer, and community-driven.
+
+# 🚀 Additional Features Specification – DeliverU 2.0 Expansion
+
+## 🎡 1. Lucky Draw Wheel — *“What Should I Eat?”*
+
+**Purpose:** Help indecisive students decide where to eat while adding a fun and engaging touch to the app.
+
+### Overview
+A spinning **randomizer wheel** that selects a canteen or nearby restaurant for the user.
+
+### Key Features
+- **Animated spinner** with canteen or restaurant icons  
+- Displays **canteen name + daily special or highlight**  
+- Option to **share result** (e.g., “Looks like I’m eating LG7 today 🍜!”)  
+- Optional small **credit reward** for using the wheel (e.g., +0.1 DC)  
+- **“Order Now”** button redirects to the order creation screen with that canteen pre-filled  
+
+### Integration Flow
+
+Dashboard → Lucky Wheel
+↓
+User spins → result displayed
+↓
+Option “Order Now” → jumps to order creation page with selected canteen
+
+crmsh
+
+### Technical Notes
+- Implemented via **React Native animation / Canvas-based spinner**  
+- Can fetch canteen list dynamically from backend  
+- Optional **weighted randomness** (e.g., based on popularity / user history)  
+
+---
+
+## 🧑‍🤝‍🧑 2. Group / Batch Orders
+
+**Purpose:** Allow multiple students in the same dorm to join a shared delivery, improving delivery success and efficiency for both orderers and deliverers.
+
+### Core Concept
+When a user places an order, they can mark it as **“Open for Group Join.”**  
+This publishes the order in a **hall-level shared order board**, visible to all students in the same hall.
+
+### Flow Summary
+| Step | Description |
+|------|--------------|
+| 1 | **User A** creates an order and enables “Allow group join.” |
+| 2 | The order appears in the **hall’s public order board**. |
+| 3 | Other hallmates can **join** by adding their own food items under the same batch. |
+| 4 | Deliverers can view combined orders and **accept multiple at once** (“Batch delivery”). |
+| 5 | After completion, the **deliverer earns credits** equal to the **number of users served**. |
+
+### Example  
+- 3 users join the same group order  
+- 1 deliverer accepts  
+- Deliverer earns **+3 DC total** (1 per participant)
+
+### Benefits
+- Increases delivery success rate (higher chance of accepted orders)  
+- Improves efficiency and community collaboration  
+- Reduces environmental footprint (fewer duplicate trips)  
+
+### UI Enhancements
+- **Dashboard:** “Group Orders Open in My Hall” section  
+- **Deliverer Queue:** Filter for “Batchable Orders Only”  
+- **Order Card Display:** Shows number of participants (e.g., “3 joined”)  
+
+### Technical Notes
+- New database collection: `group_orders`  
+- Requires order aggregation logic and participant linking  
+- Credit calculation handled server-side upon delivery confirmation  
+
+---
+
+## 🎮 3. Mini Waiting Game — *“UST Dash”*
+
+**Purpose:** Keep users engaged while waiting for their orders to arrive.
+
+### Concept
+A simple, endless **mini-game** inspired by *Flappy Bird* or the *Chrome Dinosaur game*, themed around HKUST campus life.
+
+### Gameplay Ideas
+- Player controls a **student cyclist** (DeliverU mascot 🚴)  
+- Background: **HKUST campus** (Academic Concourse, LG7, dorm area)  
+- Obstacles: fountains, stairs, buses, random birds  
+- Rewards: earn **bonus credits or cosmetic items** for high scores  
+
+### Integration Flow
+
+Order In Progress → “Play UST Dash While You Wait!”
+↓
+Gameplay session (endless)
+↓
+Display score → optional small reward
+
+sql_more
+
+### Technical Notes
+- Built with **React Native Canvas / Expo + Phaser Engine**  
+- Mostly **offline client logic** (minimal backend load)  
+- Optionally sync top scores or achievements via Firebase  
+
+---
+
+## 🪪 4. User Card & Social System
+
+**Purpose:** Gamify user identity and encourage friendly competition through personalized and social profile elements.
+
+### User Card Components
+| Element | Description |
+|----------|--------------|
+| Profile Icon | Custom or default avatar |
+| Display Name | User’s nickname |
+| Short Bio | 80-character description (e.g., “LG7 enjoyer 🍙 since 2024”) |
+| Stats | Deliveries completed, Orders placed, Rating |
+| Popularity Button ❤️ | Tap to increase user’s popularity score |
+| Badges | Unlocked through milestones or battle pass tiers |
+
+> Acts as a **digital student ID + achievement card** for DeliverU users.
+
+---
+
+### ❤️ Popularity & Weekly Rival System
+
+**Concept:** Students can “cheer” each other via the **Popularity Button**. Rankings reset weekly.
+
+#### Rival Mechanism
+1. A user can **challenge a friend** (mutual or same hall).  
+2. A **1-week mini leaderboard** opens between both users.  
+3. Points are earned from:
+   - Popularity taps ❤️  
+   - Deliveries completed 🚴‍♀️  
+   - Orders placed 🍱  
+4. The weekly winner receives a **badge or reward** (e.g., “Hall Star ✨”).
+
+#### Anti-Abuse Controls
+- Each user can give **max 3 popularity points per person per day.**
+
+---
+
+## 🏆 5. Battle Pass System — *DeliverU Pass*
+
+**Purpose:** Introduce a long-term reward loop where users earn points and unlock cosmetics, badges, or small bonuses through regular usage.
+
+### How It Works
+- Every completed **order or delivery** earns **Battle Points (BP)**.  
+- BP accumulate along a **seasonal progress bar** (semester-based).  
+- Unlock rewards such as:
+  - Titles (e.g., *“Hall Hero”*, *“Canteen Champ”*)  
+  - Profile themes & borders  
+  - Custom emojis & badges  
+  - Small DC bonus milestones  
+
+### Example Actions
+| Action | Reward |
+|--------|---------|
+| Complete a delivery | +10 BP |
+| Place an order | +5 BP |
+| Win weekly rivalry | +20 BP |
+
+### Seasons & Customization
+- **Resets each semester** (e.g., *Spring 2026 – Campus Chronicles 🌸*)  
+- Users can customize card appearance:
+  - Theme color  
+  - Equipped title  
+  - Badge lineup  
+
+### Technical Notes
+- Extend user schema with fields: `battle_points`, `tier`, `custom_theme`  
+- Rewards stored client-side for immediate UI updates  
+
+---
+
+## 🧩 Summary of Additional Features
+
+| Feature | Goal | Impact | Complexity |
+|----------|------|---------|-------------|
+| Lucky Draw Wheel | Fun, casual engagement | 🎯 Medium | 🔧 Easy |
+| Group / Batch Orders | Efficiency & success rates | 💥 High | ⚙️ Medium |
+| Mini Waiting Game | Downtime entertainment | 🎮 Medium | ⚙️ Medium |
+| User Card & Popularity | Social retention + identity | ❤️ High | ⚙️ Medium–High |
+| Battle Pass | Long-term progression | 🔁 Very High | ⚙️ High |
+
+---
+
+**DeliverU 2.0 — More local, social, and fun.**
+*Expanding the community-driven spirit of HKUST, one meal at a time.*
