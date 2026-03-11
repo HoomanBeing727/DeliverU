@@ -24,6 +24,12 @@ import { LeaderboardResponse } from '../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
+const DELIVERY_SENTENCES = {
+  day: ["Fuel up—deliveries await.", "Order up—let's get it delivered.", "Grab a bite, then make a run."],
+  afternoon: ["Afternoon rush? We've got your delivery.", "Midday cravings—on the way.", "Quick run, hot food."],
+  evening: ["Dinner time—let's bring it home.", "Evening vibes, speedy deliveries.", "Warm meals, smooth drop-offs."],
+  night: ["Late-night cravings? We deliver.", "Night shift: snacks incoming.", "Quiet campus, fast delivery."]
+} as const;
 export default function DashboardScreen({ navigation }: Props) {
   const { user, logout, refreshUser } = useAuth();
   const t = useTheme();
@@ -92,6 +98,18 @@ export default function DashboardScreen({ navigation }: Props) {
     });
   };
 
+  // Time-based delivery sentence logic
+  const hour = new Date().getHours();
+  let bucket: keyof typeof DELIVERY_SENTENCES;
+  if (hour >= 6 && hour < 12) bucket = 'day';
+  else if (hour >= 12 && hour < 17) bucket = 'afternoon';
+  else if (hour >= 17 && hour < 22) bucket = 'evening';
+  else bucket = 'night'; // hour >= 22 || hour < 6
+  
+  const seed = new Date().getDate(); // 1-31 for deterministic selection
+  const idx = seed % DELIVERY_SENTENCES[bucket].length;
+  const deliveryLine = DELIVERY_SENTENCES[bucket][idx];
+
   async function handleLogout() {
     Alert.alert('Logout', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
@@ -105,13 +123,19 @@ export default function DashboardScreen({ navigation }: Props) {
         <Text style={[t.typography.largeTitle, { color: t.colors.text, marginBottom: 4 }]}>
           Hello, {user?.nickname ?? 'User'}!
         </Text>
+        <Text style={[t.typography.footnote, { color: t.colors.subtext, marginBottom: 6 }]}>
+          {deliveryLine}
+        </Text>
         <Text style={[t.typography.footnote, { color: t.colors.subtext, marginBottom: 16 }]}>
           {user?.dorm_hall}
         </Text>
 
-        <Text style={[t.typography.headline, { color: t.colors.accent, marginBottom: 24 }]}>
-          {user?.credits ?? 0} DC
-        </Text>
+        <View style={styles.creditsRow}>
+          <FontAwesome5 name="coins" solid size={18} color={t.colors.orange} style={styles.creditsIcon} />
+          <Text style={[t.typography.headline, { color: t.colors.accent }]}>
+            {user?.credits ?? 0} DC
+          </Text>
+        </View>
 
         {/* Toggle Switch */}
         <View style={[styles.toggleContainer, { backgroundColor: t.colors.border }]}>
@@ -373,6 +397,14 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  creditsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  creditsIcon: {
+    marginRight: 8,
   },
   contentContainer: {
     marginHorizontal: 24,

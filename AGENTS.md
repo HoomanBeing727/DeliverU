@@ -42,6 +42,7 @@ npx tsc --noEmit                  # Type-check (ONLY available check)
 - **Backend**: No automated checks (no pytest, ruff, mypy). Manually verify by running the server.
 - **No CI/CD, linting, or test frameworks.** Do NOT invoke `pytest`, `jest`, `ruff`, `eslint`, `prettier` — they don't exist.
 - `backend/test_app.py` and `backend/test_import.py` are ad-hoc debug scripts, NOT test suites.
+- **No Alembic migrations.** Tables are auto-created via `Base.metadata.create_all` in the FastAPI lifespan event. Schema changes require manual DB recreation (`docker compose down -v && docker compose up -d`).
 
 ---
 
@@ -66,13 +67,13 @@ from models.user import User
 
 **Error handling** — Routers raise `HTTPException` with `status.HTTP_*` constants. Services raise `HTTPException` for business logic errors or return `None` on lookup failure. Never bare `except:`.
 
-**ORM** — SQLAlchemy 2.0 async style. `Mapped[]` + `mapped_column()`. String UUID primary keys (`default=lambda: str(uuid.uuid4())`). ForeignKey references use `String` type.
+**ORM** — SQLAlchemy 2.0 async style. `Mapped[]` + `mapped_column()`. String UUID primary keys (`default=lambda: str(uuid.uuid4())`). ForeignKey references use `String` type. Session uses `expire_on_commit=False`.
 
-**Pydantic** — `BaseModel` for request/response schemas. `field_validator` with `@classmethod`. Response models use `model_config = {"from_attributes": True}`. Settings via `pydantic-settings` `BaseSettings` with `model_config = {"env_file": ".env"}`.
+**Pydantic** — `BaseModel` for request/response schemas. `field_validator` with `@classmethod`. Response models (only) use `model_config = {"from_attributes": True}`. Settings via `pydantic-settings` `BaseSettings` with `model_config = {"env_file": ".env"}`.
 
 **Router pattern** — `APIRouter(prefix="/resource", tags=["resource"])`. Auth via `Depends(get_current_user)`. DB via `Depends(get_db)`. Commit + refresh in router, not service. Services return ORM objects.
 
-**Formatting** — 4-space indent. Double blank lines between top-level definitions. Module-level singletons for expensive objects. Triple-quote docstrings for all public functions.
+**Formatting** — 4-space indent. Double blank lines between top-level definitions. Module-level singletons for expensive objects (e.g., `_bearer = HTTPBearer()` in auth). Triple-quote docstrings for all public functions.
 
 ### TypeScript (Frontend)
 
@@ -88,7 +89,7 @@ import { RootStackParamList } from '../types';
 
 **Types** — `"strict": true` in tsconfig (extends `expo/tsconfig.base`). Use `interface` for data shapes, `type` for unions/aliases. **Never use `any`** — use `unknown` if truly needed. Always type component props and API return types.
 
-**Components** — Functional only: `export default function ComponentName() { ... }`. Named export for hooks/utilities. Destructure props at function signature.
+**Components** — Functional only: `export default function ComponentName() { ... }`. Named export for hooks/utilities. Destructure props at function signature. Props typed via `NativeStackScreenProps<RootStackParamList, 'ScreenName'>`.
 
 **Styles** — `StyleSheet.create()` at file bottom. Dynamic colors via array syntax: `[styles.x, { color: t.colors.text }]`. No inline style objects.
 
@@ -96,7 +97,7 @@ import { RootStackParamList } from '../types';
 
 **State** — `useState`/`useEffect` for local. React Context for global (AuthContext, ToastContext). Context pattern: `createContext<T | undefined>(undefined)` + custom hook with `throw` guard.
 
-**API layer** — Axios with request interceptor for Bearer token (`src/api/client.ts`). Per-resource modules (`src/api/orders.ts`, etc.) export typed async functions. Request payload interfaces defined in API module. Return types reference `src/types/index.ts`.
+**API layer** — Axios with request interceptor for Bearer token (`src/api/client.ts`). Per-resource modules (`src/api/orders.ts`, etc.) export typed async functions. Request payload interfaces defined in API module. Return types reference `src/types/index.ts`. Base URL configurable via `EXPO_PUBLIC_API_BASE_URL` env var.
 
 **Error handling** — `try/catch` with `Alert.alert()` or `useToast().showToast()` for user-facing errors. Catch blocks do NOT re-throw unless propagating to context.
 
@@ -108,18 +109,20 @@ backend/
 ├─ main.py              # FastAPI app, CORS, lifespan (auto-creates tables)
 ├─ config.py            # pydantic-settings: database_url, jwt_secret, jwt_algorithm, jwt_expiry_hours
 ├─ database.py          # async engine, session maker, Base, get_db
+├─ docker-compose.yml   # PostgreSQL 16 (Alpine) container config
+├─ requirements.txt     # fastapi, uvicorn, sqlalchemy, asyncpg, pydantic, python-jose, passlib, Pillow, pyzbar
 ├─ models/              # SQLAlchemy ORM: User, Order, CreditTransaction, Rating, ChatMessage
 ├─ schemas/             # Pydantic request/response schemas (mirror routers 1:1)
-├─ services/            # Business logic (order_service, credit_service, auth_service, etc.)
+├─ services/            # Business logic (order_service, credit_service, auth_service, chat, qr, rating)
 ├─ middleware/          # auth_middleware.py — get_current_user dependency
 ├─ routers/             # API endpoints: auth, users, orders, credits, ratings, chat, qr, stats
 └─ .env.example         # Template for required env vars (copy to .env)
 mobile/src/
-├─ api/                 # Typed Axios client (client.ts + per-resource modules)
+├─ api/                 # Typed Axios client (client.ts) + per-resource modules (9 files)
 ├─ context/             # AuthContext.tsx, ToastContext.tsx
 ├─ navigation/          # RootNavigator.tsx — Stack nav with auth gating
 ├─ screens/             # 14 screens: Login, Register, Dashboard, OrderDetail, Chat, etc.
-├─ components/          # ChipSelector, RadioGroup, OrderCard, StarRating, Toast
+├─ components/          # AppHeader, ChipSelector, RadioGroup, OrderCard, StarRating, Toast
 ├─ constants/           # dorms.ts (halls, time slots, locations), theme.ts (light/dark themes)
 └─ types/index.ts       # All TS interfaces: Order, UserProfile, ChatMessage, RootStackParamList
 ```

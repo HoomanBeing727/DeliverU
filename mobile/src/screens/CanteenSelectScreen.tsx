@@ -38,6 +38,12 @@ export default function CanteenSelectScreen({ navigation }: Props) {
       desc: 'Asia Pacific Catering',
       url: 'https://now.order.place/#/store/5173439666061312/mode/prekiosk',
     },
+    {
+      name: 'Oliver Super Sandwich',
+      canteen: 'Oliver Super Sandwich',
+      desc: 'Sandwiches & Light Bites',
+      url: 'https://oss.order.place/home/store/4914477236486144',
+    },
   ];
 
   return (

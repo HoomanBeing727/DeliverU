@@ -5,7 +5,7 @@ from pydantic import BaseModel, field_validator
 from schemas.user import VALID_HALLS
 
 
-VALID_CANTEENS = ["LG1", "LSK", "Asia Pacific"]
+VALID_CANTEENS = ["LG1", "LSK", "Asia Pacific", "Oliver Super Sandwich"]
 
 VALID_ORDER_STATUSES = ["pending", "accepted", "picked_up", "delivered", "cancelled"]
 

@@ -70,36 +70,29 @@ export default function LeaderboardScreen({ navigation, route }: Props) {
       <AppHeader title="Leaderboard" onBack={navigation.goBack} />
       <ScrollView style={styles.container}>
 
-      <View style={[styles.tabsContainer, { backgroundColor: t.colors.card, borderColor: t.colors.border }]}>
+      <View style={[styles.toggleContainer, { backgroundColor: t.colors.border }]}>
         <TouchableOpacity
           style={[
-            styles.tabButton,
-            styles.tabButtonLeft,
-            {
-              backgroundColor: activeTab === 'orderers' ? t.colors.accent : t.colors.card,
-              borderColor: activeTab === 'orderers' ? t.colors.accent : t.colors.border,
-            },
+            styles.toggleBtn,
+            activeTab === 'orderers' && { backgroundColor: t.colors.accent },
           ]}
           onPress={() => setActiveTab('orderers')}
-          activeOpacity={0.85}
+          activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'orderers' ? t.colors.card : t.colors.text }]}>
+          <Text style={[styles.toggleText, { color: activeTab === 'orderers' ? '#fff' : t.colors.text }]}>
             Orderers
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[
-            styles.tabButton,
-            {
-              backgroundColor: activeTab === 'deliverers' ? t.colors.accent : t.colors.card,
-              borderColor: activeTab === 'deliverers' ? t.colors.accent : t.colors.border,
-            },
+            styles.toggleBtn,
+            activeTab === 'deliverers' && { backgroundColor: t.colors.accent },
           ]}
           onPress={() => setActiveTab('deliverers')}
-          activeOpacity={0.85}
+          activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { color: activeTab === 'deliverers' ? t.colors.card : t.colors.text }]}>
+          <Text style={[styles.toggleText, { color: activeTab === 'deliverers' ? '#fff' : t.colors.text }]}>
             Deliverers
           </Text>
         </TouchableOpacity>
@@ -161,25 +154,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabsContainer: {
+  toggleContainer: {
     flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 16,
+    height: 44,
     borderRadius: 25,
     padding: 4,
-    borderWidth: 1,
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
-  tabButton: {
+  toggleBtn: {
     flex: 1,
-    paddingVertical: 8,
     alignItems: 'center',
-    borderRadius: 25,
-    borderWidth: 1,
+    justifyContent: 'center',
+    borderRadius: 21,
+    paddingVertical: 8,
   },
-  tabButtonLeft: {
-    marginRight: 4,
-  },
-  tabText: {
+  toggleText: {
     fontSize: 15,
     fontWeight: '600',
   },
