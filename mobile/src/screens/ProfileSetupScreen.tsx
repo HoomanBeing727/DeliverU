@@ -9,11 +9,11 @@ import {
   Alert,
   Switch,
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../constants/theme';
 import { setupProfile } from '../api/users';
-import AppHeader from '../components/AppHeader';
 import ChipSelector from '../components/ChipSelector';
 import RadioGroup from '../components/RadioGroup';
 import {
@@ -127,17 +127,35 @@ export default function ProfileSetupScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: t.colors.bg }]} contentContainerStyle={styles.content}>
-      <Text style={[styles.title, { color: t.colors.accent }]}>Set Up Your Profile</Text>
-      <Text style={[styles.subtitle, { color: t.colors.subtext }]}>Tell us a bit about yourself</Text>
+      <Text style={[styles.title, t.typography.title1, { color: t.colors.accent }]}>Set Up Your Profile</Text>
+      <Text style={[styles.subtitle, t.typography.footnote, { color: t.colors.subtext }]}>Tell us a bit about yourself</Text>
 
-      <Text style={[styles.label, { color: t.colors.text }]}>Nickname</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
-        placeholder="Your display name"
-        placeholderTextColor="#999"
-        value={nickname}
-        onChangeText={setNickname}
-      />
+      <View style={styles.labelRow}>
+        <FontAwesome5 name="user" size={14} color={t.colors.accent} style={{ marginRight: 8 }} />
+        <Text style={[styles.label, t.typography.subhead, { color: t.colors.text }]}>Nickname</Text>
+      </View>
+      
+      <View style={[
+        styles.inputContainer, 
+        t.shadow.subtle, 
+        { 
+          borderRadius: t.radius.md, 
+          backgroundColor: t.colors.secondaryBg,
+          borderWidth: 1,
+          borderColor: t.colors.separator
+        }
+      ]}>
+        <TextInput
+          style={[styles.input, { 
+            color: t.colors.text, 
+            backgroundColor: 'transparent' // Background is on container for shadow
+          }]}
+          placeholder="Your display name"
+          placeholderTextColor={t.colors.subtext}
+          value={nickname}
+          onChangeText={setNickname}
+        />
+      </View>
 
       <ChipSelector
         label="Dorm Hall"
@@ -169,11 +187,11 @@ export default function ProfileSetupScreen() {
       />
 
       <View style={styles.switchRow}>
-        <Text style={[styles.switchLabel, { color: t.colors.text }]}>I also want to deliver</Text>
+        <Text style={[styles.switchLabel, t.typography.subhead, { color: t.colors.text }]}>I also want to deliver</Text>
         <Switch
           value={isDeliverer}
           onValueChange={setIsDeliverer}
-          trackColor={{ false: '#ccc', true: '#003366' }}
+          trackColor={{ false: t.colors.secondaryBg, true: t.colors.accent }}
           thumbColor="#fff"
         />
       </View>
@@ -197,11 +215,12 @@ export default function ProfileSetupScreen() {
       )}
 
       <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+        style={[styles.button, { backgroundColor: t.colors.accent, borderRadius: t.radius.md }, loading && styles.buttonDisabled]}
         onPress={handleSubmit}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Complete Setup'}</Text>
+        <FontAwesome5 name="check-circle" size={16} color="#fff" style={{ marginRight: 8 }} />
+        <Text style={[styles.buttonText, t.typography.callout, { color: '#fff' }]}>{loading ? 'Saving...' : 'Complete Setup'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -216,26 +235,28 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
     marginBottom: 24,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
+  label: {
+    // typography handled in inline style
+  },
+  inputContainer: {
+    marginBottom: 20,
+    // borderRadius handled in inline
+  },
   input: {
-    borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    marginBottom: 20,
-    borderWidth: 1,
+    // height: 50, // Optional but good for touch targets
   },
   switchRow: {
     flexDirection: 'row',
@@ -245,23 +266,19 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   switchLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    // typography handled in inline style
   },
   button: {
-    backgroundColor: '#003366',
-    borderRadius: 8,
+    flexDirection: 'row',
     paddingVertical: 16,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 8,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
   },
 });
-

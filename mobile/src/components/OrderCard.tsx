@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { Order } from '../types';
 import { useTheme } from '../constants/theme';
 
@@ -14,11 +15,11 @@ export default function OrderCard({ order, onPress }: Props) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#ff9800';
-      case 'accepted': return '#2196f3';
-      case 'picked_up': return '#9c27b0';
-      case 'delivered': return '#4caf50';
-      case 'cancelled': return '#f44336';
+      case 'pending': return t.colors.statusPending;
+      case 'accepted': return t.colors.statusAccepted;
+      case 'picked_up': return t.colors.statusPickedUp;
+      case 'delivered': return t.colors.statusDelivered;
+      case 'cancelled': return t.colors.statusCancelled;
       default: return t.colors.subtext;
     }
   };
@@ -45,51 +46,75 @@ export default function OrderCard({ order, onPress }: Props) {
 
   return (
     <TouchableOpacity 
-      style={[styles.card, { backgroundColor: t.colors.card }, t.shadow.card]}
+      style={[
+        styles.card, 
+        { 
+          backgroundColor: t.colors.card,
+          borderRadius: t.radius.lg,
+          padding: t.spacing.md,
+          marginVertical: t.spacing.sm,
+          marginHorizontal: t.spacing.xs,
+        },
+        t.shadow.card
+      ]}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={styles.header}>
-        <Text style={[styles.canteen, { color: t.colors.text }]}>{order.canteen}</Text>
-        <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}> 
-          <Text style={[styles.statusText, { color: statusColor }]}>
+      <View style={[styles.header, { marginBottom: t.spacing.md }]}>
+        <Text style={[styles.canteen, t.typography.title3, { color: t.colors.text, marginRight: t.spacing.sm }]}>
+          {order.canteen}
+        </Text>
+        <View style={[styles.badge, { backgroundColor: statusColor + '20', borderRadius: t.radius.sm, paddingHorizontal: t.spacing.sm, paddingVertical: t.spacing.xs }]}> 
+          <Text style={[styles.statusText, t.typography.caption2, { color: statusColor, fontWeight: '800' }]}>
             {order.status.replace('_', ' ').toUpperCase()}
           </Text>
         </View>
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: t.colors.subtext }]}>Items</Text>
-          <Text style={[styles.value, { color: t.colors.text }]}>
+      <View style={[styles.content, { marginBottom: t.spacing.md }]}>
+        <View style={[styles.row, { marginBottom: t.spacing.xs }]}>
+          <View style={styles.iconLabel}>
+            <FontAwesome5 name="utensils" size={13} color={t.colors.subtext} style={{ width: 20 }} />
+            <Text style={[styles.label, t.typography.body, { color: t.colors.subtext }]}>Items</Text>
+          </View>
+          <Text style={[styles.value, t.typography.subhead, { color: t.colors.text }]}>
             {itemCount} item{itemCount !== 1 ? 's' : ''}
           </Text>
         </View>
         
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: t.colors.subtext }]}>Total</Text>
-          <Text style={[styles.price, { color: t.colors.accent }]}>
+        <View style={[styles.row, { marginBottom: t.spacing.xs }]}>
+          <View style={styles.iconLabel}>
+            <FontAwesome5 name="dollar-sign" size={13} color={t.colors.accent} style={{ width: 20 }} />
+            <Text style={[styles.label, t.typography.body, { color: t.colors.subtext }]}>Total</Text>
+          </View>
+          <Text style={[styles.price, t.typography.headline, { color: t.colors.accent }]}>
             HK${order.total_price.toFixed(1)}
           </Text>
         </View>
 
-        <View style={styles.row}>
-          <Text style={[styles.label, { color: t.colors.subtext }]}>To</Text>
-          <Text style={[styles.value, { color: t.colors.text }]}>
+        <View style={[styles.row, { marginBottom: t.spacing.xs }]}>
+          <View style={styles.iconLabel}>
+            <FontAwesome5 name="map-marker-alt" size={13} color={t.colors.subtext} style={{ width: 20 }} />
+            <Text style={[styles.label, t.typography.body, { color: t.colors.subtext }]}>To</Text>
+          </View>
+          <Text style={[styles.value, t.typography.subhead, { color: t.colors.text }]}>
             {order.delivery_hall}
           </Text>
         </View>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: t.colors.bg }]} />
+      <View style={[styles.divider, { backgroundColor: t.colors.bg, marginBottom: t.spacing.md }]} />
 
       <View style={styles.footer}>
-        <Text style={[styles.meta, { color: t.colors.subtext }]}>
-          by {order.orderer_nickname}
-        </Text>
-        <Text style={[styles.meta, { color: t.colors.subtext }]}>
-          {getTimeAgo(order.created_at)}
-        </Text>
+        <View>
+          <Text style={[styles.meta, t.typography.caption, { color: t.colors.subtext }]}>
+            by {order.orderer_nickname}
+          </Text>
+          <Text style={[styles.meta, t.typography.caption, { color: t.colors.subtext }]}>
+            {getTimeAgo(order.created_at)}
+          </Text>
+        </View>
+        <FontAwesome5 name="chevron-right" size={14} color={t.colors.muted} />
       </View>
     </TouchableOpacity>
   );
@@ -97,59 +122,45 @@ export default function OrderCard({ order, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 8,
-    marginHorizontal: 4,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    // shadow handled by theme
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center', // changed from flex-start to align with badge
   },
   canteen: {
-    fontSize: 18,
-    fontWeight: '700',
     flex: 1,
-    marginRight: 8,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    // sizing handled inline
   },
   statusText: {
-    fontSize: 10,
-    fontWeight: '800',
     letterSpacing: 0.5,
   },
   content: {
-    marginBottom: 12,
+    // margin handled inline
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    alignItems: 'center',
+  },
+  iconLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   label: {
-    fontSize: 14,
+    // handled by theme
   },
   value: {
-    fontSize: 14,
-    fontWeight: '600',
+    // handled by theme
   },
   price: {
-    fontSize: 16,
-    fontWeight: '700',
+    // handled by theme
   },
   divider: {
     height: 1,
-    marginBottom: 12,
   },
   footer: {
     flexDirection: 'row',
@@ -157,6 +168,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   meta: {
-    fontSize: 12,
+    // handled by theme
   }
 });

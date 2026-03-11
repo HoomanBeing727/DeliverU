@@ -10,7 +10,7 @@
 ### Database (PostgreSQL via Docker)
 ```bash
 cd backend
-docker compose up -d              # Start PostgreSQL 16 (port 5432)
+docker compose up -d              # Start PostgreSQL 16 (port 5432, user: deliveru, pass: deliveru_dev)
 docker compose down               # Stop container
 docker compose down -v            # Stop + delete data
 ```
@@ -35,15 +35,13 @@ npm run android                   # Android emulator
 npm run ios                       # iOS simulator
 npm run web                       # Browser
 npx tsc --noEmit                  # Type-check (ONLY available check)
-# Tailscale LAN:
-npm run start:lan:ts:win          # Windows
-npm run start:lan:ts:nix          # macOS/Linux
 ```
 
-### No CI/CD, Linting, or Test Frameworks
-- **No pytest, jest, ruff, ESLint, Prettier** — do NOT invoke them.
-- Only verification available: `npx tsc --noEmit` for frontend.
-- Backend has no automated checks. Manually verify by running the server.
+### Verification — IMPORTANT
+- **Frontend**: `npx tsc --noEmit` in `mobile/` — the ONLY automated check. Run after ANY TypeScript change.
+- **Backend**: No automated checks (no pytest, ruff, mypy). Manually verify by running the server.
+- **No CI/CD, linting, or test frameworks.** Do NOT invoke `pytest`, `jest`, `ruff`, `eslint`, `prettier` — they don't exist.
+- `backend/test_app.py` and `backend/test_import.py` are ad-hoc debug scripts, NOT test suites.
 
 ---
 
@@ -70,7 +68,7 @@ from models.user import User
 
 **ORM** — SQLAlchemy 2.0 async style. `Mapped[]` + `mapped_column()`. String UUID primary keys (`default=lambda: str(uuid.uuid4())`). ForeignKey references use `String` type.
 
-**Pydantic** — `BaseModel` for request/response schemas. `field_validator` with `@classmethod`. Response models use `model_config = {"from_attributes": True}` for ORM conversion. Settings via `pydantic-settings` `BaseSettings` with `model_config = {"env_file": ".env"}`.
+**Pydantic** — `BaseModel` for request/response schemas. `field_validator` with `@classmethod`. Response models use `model_config = {"from_attributes": True}`. Settings via `pydantic-settings` `BaseSettings` with `model_config = {"env_file": ".env"}`.
 
 **Router pattern** — `APIRouter(prefix="/resource", tags=["resource"])`. Auth via `Depends(get_current_user)`. DB via `Depends(get_db)`. Commit + refresh in router, not service. Services return ORM objects.
 
@@ -84,14 +82,17 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { UserProfile } from '../types';
+import { useTheme } from '../constants/theme';
+import { RootStackParamList } from '../types';
 ```
 
-**Types** — `"strict": true` in tsconfig. Use `interface` for data shapes, `type` for unions/aliases. **Never use `any`** — use `unknown` if truly needed. Always type component props and API return types.
+**Types** — `"strict": true` in tsconfig (extends `expo/tsconfig.base`). Use `interface` for data shapes, `type` for unions/aliases. **Never use `any`** — use `unknown` if truly needed. Always type component props and API return types.
 
 **Components** — Functional only: `export default function ComponentName() { ... }`. Named export for hooks/utilities. Destructure props at function signature.
 
-**Styles** — `StyleSheet.create()` at file bottom. Dynamic colors via array syntax: `[styles.x, { color: colors.text }]`. No inline style objects. Theme colors as local `const colors = isDark ? {...} : {...}`.
+**Styles** — `StyleSheet.create()` at file bottom. Dynamic colors via array syntax: `[styles.x, { color: t.colors.text }]`. No inline style objects.
+
+**Theme** — `useTheme()` hook returns `LIGHT_THEME` or `DARK_THEME` based on `user.dark_mode`. Access via `const t = useTheme();` then `t.colors.*`, `t.spacing.*`, `t.radius.*`, `t.typography.*`, `t.shadow.*`.
 
 **State** — `useState`/`useEffect` for local. React Context for global (AuthContext, ToastContext). Context pattern: `createContext<T | undefined>(undefined)` + custom hook with `throw` guard.
 
@@ -111,14 +112,15 @@ backend/
 ├─ schemas/             # Pydantic request/response schemas (mirror routers 1:1)
 ├─ services/            # Business logic (order_service, credit_service, auth_service, etc.)
 ├─ middleware/          # auth_middleware.py — get_current_user dependency
-└─ routers/             # API endpoints: auth, users, orders, credits, ratings, chat, qr, stats
+├─ routers/             # API endpoints: auth, users, orders, credits, ratings, chat, qr, stats
+└─ .env.example         # Template for required env vars (copy to .env)
 mobile/src/
 ├─ api/                 # Typed Axios client (client.ts + per-resource modules)
 ├─ context/             # AuthContext.tsx, ToastContext.tsx
 ├─ navigation/          # RootNavigator.tsx — Stack nav with auth gating
-├─ screens/             # 13 screens: Login, Register, Dashboard, OrderDetail, Chat, etc.
+├─ screens/             # 14 screens: Login, Register, Dashboard, OrderDetail, Chat, etc.
 ├─ components/          # ChipSelector, RadioGroup, OrderCard, StarRating, Toast
-├─ constants/dorms.ts   # HKUST_HALLS, TIME_SLOTS, TAKE_ORDER_LOCATIONS, DELIVERY_HABITS
+├─ constants/           # dorms.ts (halls, time slots, locations), theme.ts (light/dark themes)
 └─ types/index.ts       # All TS interfaces: Order, UserProfile, ChatMessage, RootStackParamList
 ```
 
@@ -133,7 +135,7 @@ mobile/src/
 5. **AUTH FLOW** — Register/Login → JWT → Bearer header → `get_current_user` dependency.
 6. **NAV FLOW** — No token → Login/Register. Token + no profile → ProfileSetup. Profile done → Dashboard + order screens.
 7. **`.gitignore` GOTCHA** — `models/` is gitignored (for ML files). Backend model files must be force-added: `git add -f backend/models/`.
-8. **`.env` SECRETS** — `backend/.env` has dev secrets. Never commit new secrets without confirming.
+8. **`.env` SECRETS** — `backend/.env` has dev secrets. Copy from `.env.example`. Never commit new secrets without confirming.
 9. **COMMIT PATTERN** — Router commits (db.commit + db.refresh), services just mutate/flush. Never commit inside a service function.
 10. **NEW FEATURE CHECKLIST** — Model (`models/`) → Schema (`schemas/`) → Service (`services/`) → Router (`routers/`, register in `main.py`) → API module (`mobile/src/api/`) → Types (`mobile/src/types/index.ts`) → Screen → Nav registration.
 
@@ -148,4 +150,4 @@ mobile/src/
 - **Credits** — In-app currency. Users start with 100. Deducted on order creation, awarded on delivery completion.
 - **Order lifecycle** — `pending` → `accepted` → `picked_up` → `delivered` (or `cancelled` at any stage).
 - **HKUST Halls** — Hall I through Hall XIII (Roman numerals). Defined in `schemas/user.py` and `constants/dorms.ts`.
-- **Canteens** — Currently only `LG1`. Validated in `schemas/order.py`.
+- **Canteens** — `LG1`, `LSK`, `Asia Pacific`. Validated in `schemas/order.py` (`VALID_CANTEENS`).

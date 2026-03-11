@@ -12,6 +12,7 @@ import {
   Animated,
   Image
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -207,12 +208,12 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case 'pending': return '#ff9800';
-      case 'accepted': return '#2196f3';
-      case 'picked_up': return '#9c27b0';
-      case 'delivered': return '#4caf50';
-      case 'cancelled': return '#f44336';
-      default: return t.colors.subtext;
+      case 'pending': return t.colors.statusPending;
+      case 'accepted': return t.colors.statusAccepted;
+      case 'picked_up': return t.colors.statusPickedUp;
+      case 'delivered': return t.colors.statusDelivered;
+      case 'cancelled': return t.colors.statusCancelled;
+default: return t.colors.subtext;
     }
   };
 
@@ -238,28 +239,45 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
     const isFuture = state === 'future';
 
     const dotColor = isCompleted || isActive ? t.colors.success : isCancelled ? t.colors.danger : t.colors.subtext;
-
     const lineColor = isCompleted ? t.colors.success : t.colors.subtext;
+
+    let iconName = 'circle';
+    let iconSolid = true; // Default to solid for completed/active/cancelled
+    
+    if (isCompleted) {
+      iconName = 'check-circle';
+      iconSolid = true;
+    } else if (isActive) {
+      iconName = 'circle';
+      iconSolid = true;
+    } else if (isCancelled) {
+      iconName = 'times-circle';
+      iconSolid = true;
+    } else {
+      // Future
+      iconName = 'circle';
+      iconSolid = false; // Regular/Outline
+    }
 
     return (
       <View key={label} style={styles.timelineItem}>
-        <View style={{ alignItems: 'center', marginRight: 12 }}>
-          {/* Dot */}
+        <View style={{ alignItems: 'center', marginRight: 12, width: 20 }}>
+          {/* Icon Dot */}
           <Animated.View style={[
-            styles.timelineDot, 
-            { backgroundColor: dotColor, marginRight: 0 },
+            styles.timelineIconContainer,
             isActive && { 
-              opacity: pulseAnim,
               transform: [{ scale: pulseAnim.interpolate({ inputRange: [0.4, 1], outputRange: [1, 1.2] }) }]
             }
-          ]} />
+          ]}>
+             <FontAwesome5 name={iconName} solid={iconSolid} size={14} color={dotColor} />
+          </Animated.View>
           
           {/* Connecting Line (Going Down) */}
           {!isLast && (
             <View style={{
               position: 'absolute',
-              top: 16, // marginTop(6) + height(10)
-              bottom: -22, // Extend through marginBottom(16) + next marginTop(6)
+              top: 20, 
+              bottom: -20, 
               width: 2,
               backgroundColor: lineColor,
               zIndex: -1
@@ -297,7 +315,11 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         </View>
 
         {/* Main Info Card */}
-        <View style={[styles.card, { backgroundColor: t.colors.card }]}>
+        <View style={[styles.card, { 
+          backgroundColor: t.colors.card, 
+          borderRadius: t.radius.lg,
+          ...t.shadow.card 
+        }]}>
           <Text style={[styles.canteenTitle, { color: t.colors.text }]}>{order.canteen}</Text>
           <View style={[styles.divider, { backgroundColor: t.colors.bg }]} />
           
@@ -320,8 +342,16 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         </View>
 
         {/* Delivery Info */}
-        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>DELIVERY DETAILS</Text>
+        {/* Delivery Info */}
+        <View style={[styles.section, { 
+          backgroundColor: t.colors.card, 
+          borderRadius: t.radius.lg,
+          ...t.shadow.card 
+        }]}>
+          <View style={styles.sectionHeader}>
+            <FontAwesome5 name="map-marker-alt" size={12} color={t.colors.subtext} style={{ marginRight: 6 }} />
+            <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>DELIVERY DETAILS</Text>
+          </View>
           
           <View style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: t.colors.subtext }]}>Destination</Text>
@@ -351,9 +381,17 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         </View>
 
         {/* QR Code Section - Show to orderer and deliverer */}
+        {/* QR Code Section - Show to orderer and deliverer */}
         {order.qr_code_image && (isOrderer || isDeliverer) && (
-          <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>ORDER QR CODE</Text>
+          <View style={[styles.section, { 
+            backgroundColor: t.colors.card, 
+            borderRadius: t.radius.lg,
+            ...t.shadow.card 
+          }]}>
+            <View style={styles.sectionHeader}>
+              <FontAwesome5 name="qrcode" size={12} color={t.colors.subtext} style={{ marginRight: 6 }} />
+              <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>ORDER QR CODE</Text>
+            </View>
             <View style={styles.qrContainer}>
               <Image
                 source={{ uri: order.qr_code_image }}
@@ -365,8 +403,16 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         )}
 
         {/* Timeline */}
-        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>TIMELINE</Text>
+        {/* Timeline */}
+        <View style={[styles.section, { 
+          backgroundColor: t.colors.card, 
+          borderRadius: t.radius.lg,
+          ...t.shadow.card 
+        }]}>
+          <View style={styles.sectionHeader}>
+            <FontAwesome5 name="clock" size={12} color={t.colors.subtext} style={{ marginRight: 6 }} />
+            <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>TIMELINE</Text>
+          </View>
           <View style={styles.timeline}>
             {(() => {
               if (order.status === 'cancelled') {
@@ -398,21 +444,35 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
         </View>
 
         {/* Chat Button - Only for accepted/picked_up orders with deliverer */}
+        {/* Chat Button - Only for accepted/picked_up orders with deliverer */}
         {(order.status === 'accepted' || order.status === 'picked_up') && order.deliverer_id && (
-          <View style={[styles.section, { backgroundColor: t.colors.card }]}>
+          <View style={[styles.section, { 
+            backgroundColor: t.colors.card, 
+            borderRadius: t.radius.lg,
+            ...t.shadow.card 
+          }]}>
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: t.colors.accent }]}
+              style={[styles.button, { backgroundColor: t.colors.accent, borderRadius: t.radius.lg }]}
               onPress={() => navigation.navigate('ChatScreen', { orderId: order.id })}
             >
+              <FontAwesome5 name="comments" size={16} color="#fff" style={{ marginRight: 8 }} />
               <Text style={styles.buttonText}>Open Chat</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Rating Section - Only for delivered orders */}
+        {/* Rating Section - Only for delivered orders */}
         {order.status === 'delivered' && (
-          <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>RATING</Text>
+          <View style={[styles.section, { 
+            backgroundColor: t.colors.card, 
+            borderRadius: t.radius.lg,
+            ...t.shadow.card 
+          }]}>
+            <View style={styles.sectionHeader}>
+              <FontAwesome5 name="star" size={12} color={t.colors.subtext} style={{ marginRight: 6 }} />
+              <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>RATING</Text>
+            </View>
             
             {userRating ? (
               <View>
@@ -451,17 +511,20 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
                   maxLength={200}
                 />
                 
-                <TouchableOpacity
-                  style={[styles.submitButton, { backgroundColor: t.colors.accent }]}
-                  onPress={handleSubmitRating}
-                  disabled={submittingRating}
-                >
-                  {submittingRating ? (
-                    <ActivityIndicator color="#fff" size="small" />
+<TouchableOpacity
+style={[styles.submitButton, { backgroundColor: t.colors.accent }]}
+onPress={handleSubmitRating}
+disabled={submittingRating}
+>
+{submittingRating ? (
+<ActivityIndicator color="#fff" size="small" />
                   ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <FontAwesome5 name="paper-plane" size={14} color="#fff" style={{ marginRight: 8 }} />
                     <Text style={styles.buttonText}>Submit Rating</Text>
-                  )}
-                </TouchableOpacity>
+                    </View>
+)}
+</TouchableOpacity>
               </View>
             )}
           </View>
@@ -477,36 +540,45 @@ export default function OrderDetailScreen({ navigation, route }: Props) {
           <>
             {!isOrderer && order.status === 'pending' && (
               <TouchableOpacity 
-                style={[styles.button, { backgroundColor: t.colors.accent }]}
+                style={[styles.button, { backgroundColor: t.colors.accent, borderRadius: t.radius.lg }]}
                 onPress={() => handleAction('accepted', acceptOrder)}
               >
+                <FontAwesome5 name="check" size={16} color="#fff" style={{ marginRight: 8 }} />
                 <Text style={styles.buttonText}>Accept Order</Text>
               </TouchableOpacity>
             )}
 
             {isDeliverer && order.status === 'accepted' && (
               <TouchableOpacity 
-                style={[styles.button, { backgroundColor: '#9c27b0' }]}
+                style={[styles.button, { backgroundColor: t.colors.statusPickedUp, borderRadius: t.radius.lg }]}
                 onPress={() => handleAction('picked up', pickupOrder)}
               >
+                <FontAwesome5 name="box" size={16} color="#fff" style={{ marginRight: 8 }} />
                 <Text style={styles.buttonText}>Mark as Picked Up</Text>
               </TouchableOpacity>
             )}
 
             {isDeliverer && order.status === 'picked_up' && (
               <TouchableOpacity 
-                style={[styles.button, { backgroundColor: '#4caf50' }]}
+                style={[styles.button, { backgroundColor: t.colors.statusDelivered, borderRadius: t.radius.lg }]}
                 onPress={() => handleAction('delivered', deliverOrder)}
               >
+                <FontAwesome5 name="truck" size={16} color="#fff" style={{ marginRight: 8 }} />
                 <Text style={styles.buttonText}>Mark as Delivered</Text>
               </TouchableOpacity>
             )}
 
             {isOrderer && (order.status === 'pending' || order.status === 'accepted') && (
               <TouchableOpacity 
-                style={[styles.button, { backgroundColor: t.colors.bg, borderColor: t.colors.danger, borderWidth: 1 }]}
+                style={[styles.button, { 
+                  backgroundColor: t.colors.bg, 
+                  borderColor: t.colors.danger, 
+                  borderWidth: 1,
+                  borderRadius: t.radius.lg 
+                }]}
                 onPress={() => handleAction('cancelled', cancelOrder, 'Are you sure you want to cancel this order?')}
               >
+                <FontAwesome5 name="times" size={16} color={t.colors.danger} style={{ marginRight: 8 }} />
                 <Text style={[styles.buttonText, { color: t.colors.danger }]}>Cancel Order</Text>
               </TouchableOpacity>
             )}
@@ -542,14 +614,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   card: {
-    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   canteenTitle: {
     fontSize: 20,
@@ -595,16 +661,18 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   section: {
-    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 12,
-    opacity: 0.7,
   },
   detailRow: {
     flexDirection: 'row',
@@ -628,11 +696,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: 6,
-    marginRight: 12,
+    // Removed specific styling as we use icon container now
+  },
+  timelineIconContainer: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent', 
+    marginBottom: 4, // Spacing from icon to line start if needed, but line is absolute
   },
   timelineContent: {
     flex: 1,
@@ -651,8 +723,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24, // extra padding for safe area
   },
   button: {
-    borderRadius: 12,
     paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },

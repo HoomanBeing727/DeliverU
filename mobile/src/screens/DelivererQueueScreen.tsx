@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
 import { getDelivererQueue } from '../api/orders';
@@ -95,18 +96,26 @@ export default function DelivererQueueScreen({ navigation }: Props) {
       <AppHeader title="Available Orders" onBack={navigation.goBack} />
 
       {/* Sort Toggle */}
-      <View style={[styles.toggleContainer, { backgroundColor: t.colors.border }]}>
+      <View style={[
+        styles.toggleContainer, 
+        { 
+          backgroundColor: t.colors.groupedBg, // Using groupedBg for toggle container background 
+          borderRadius: t.radius.pill,
+          ...t.shadow.subtle 
+        }
+      ]}>
         <TouchableOpacity
           style={[
             styles.toggleBtn,
             sortMode === 'preference' && { backgroundColor: t.colors.accent },
+            { borderRadius: t.radius.pill }
           ]}
           onPress={() => setSortMode('preference')}
           activeOpacity={0.8}
         >
           <Text
             style={[
-              styles.toggleText,
+              t.typography.subhead,
               { color: sortMode === 'preference' ? '#fff' : t.colors.text },
             ]}
           >
@@ -118,13 +127,14 @@ export default function DelivererQueueScreen({ navigation }: Props) {
           style={[
             styles.toggleBtn,
             sortMode === 'time' && { backgroundColor: t.colors.accent },
+            { borderRadius: t.radius.pill }
           ]}
           onPress={() => setSortMode('time')}
           activeOpacity={0.8}
         >
           <Text
             style={[
-              styles.toggleText,
+              t.typography.subhead,
               { color: sortMode === 'time' ? '#fff' : t.colors.text },
             ]}
           >
@@ -135,7 +145,8 @@ export default function DelivererQueueScreen({ navigation }: Props) {
 
       {sortedOrders.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: t.colors.subtext }]}>
+          <FontAwesome5 name="inbox" size={48} color={t.colors.muted} style={{ marginBottom: 16 }} />
+          <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
             No orders available for delivery right now
           </Text>
         </View>
@@ -173,7 +184,6 @@ const styles = StyleSheet.create({
   toggleContainer: {
     flexDirection: 'row',
     height: 44,
-    borderRadius: 25,
     padding: 4,
     marginHorizontal: 16,
     marginBottom: 16,
@@ -182,11 +192,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 22,
-  },
-  toggleText: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   list: {
     padding: 16,
@@ -196,9 +201,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
-  },
-  emptyText: {
-    fontSize: 16,
-    textAlign: 'center',
   },
 });

@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { createOrder, CreateOrderPayload } from '../api/orders';
@@ -98,14 +99,14 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Canteen Section */}
-        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Canteen</Text>
-          <Text style={[styles.canteenName, { color: t.colors.text }]}>{canteen}</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card }]}>
+          <Text style={[styles.sectionTitle, t.typography.caption, { color: t.colors.subtext }]}>Canteen</Text>
+          <Text style={[styles.canteenName, t.typography.headline, { color: t.colors.text }]}>{canteen}</Text>
         </View>
 
         {/* Order Items Section */}
-        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Order Items</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card }]}>
+          <Text style={[styles.sectionTitle, t.typography.caption, { color: t.colors.subtext }]}>Order Items</Text>
           {items.map((item, index) => (
             <View key={index} style={styles.itemRow}>
               <TextInput
@@ -132,24 +133,27 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
                 onChangeText={(text) => updateItem(index, 'price', text)}
               />
               <TouchableOpacity onPress={() => removeItem(index)} style={styles.removeBtn}>
-                <Text style={{ color: t.colors.subtext, fontSize: 18 }}>✕</Text>
+                <FontAwesome5 name="times-circle" size={18} color={t.colors.danger} />
               </TouchableOpacity>
             </View>
           ))}
           <TouchableOpacity onPress={addItem} style={styles.addItemBtn}>
-            <Text style={{ color: t.colors.accent, fontWeight: 'bold' }}>+ Add Item</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <FontAwesome5 name="plus-circle" size={14} color={t.colors.accent} style={{ marginRight: 6 }} />
+              <Text style={{ color: t.colors.accent, fontWeight: 'bold' }}>Add Item</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
         {/* Total Price Section */}
-        <View style={[styles.section, { backgroundColor: t.colors.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-          <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>Total Price</Text>
-          <Text style={[styles.totalPrice, { color: t.colors.accent }]}>${totalPrice.toFixed(1)}</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+          <Text style={[styles.sectionTitle, t.typography.caption, { color: t.colors.subtext, marginBottom: 0 }]}>Total Price</Text>
+          <Text style={[styles.totalPrice, t.typography.title2, { color: t.colors.accent }]}>${totalPrice.toFixed(1)}</Text>
         </View>
 
         {/* Delivery Hall Section */}
-        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Delivery Hall</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card }]}>
+          <Text style={[styles.sectionTitle, t.typography.caption, { color: t.colors.subtext }]}>Delivery Hall</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hallScroll}>
             {HKUST_HALLS.map((hall) => {
               const selected = deliveryHall === hall;
@@ -160,7 +164,8 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
                     styles.hallChip,
                     {
                       backgroundColor: selected ? t.colors.accent : t.colors.bg,
-                      borderColor: t.colors.border
+                      borderColor: t.colors.border,
+                      borderRadius: t.radius.pill,
                     }
                   ]}
                   onPress={() => setDeliveryHall(hall)}
@@ -173,8 +178,8 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
         </View>
 
         {/* Note Section */}
-        <View style={[styles.section, { backgroundColor: t.colors.card }]}>
-          <Text style={[styles.sectionTitle, { color: t.colors.subtext }]}>Note</Text>
+        <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card }]}>
+          <Text style={[styles.sectionTitle, t.typography.caption, { color: t.colors.subtext }]}>Note</Text>
           <TextInput
             style={[styles.noteInput, { backgroundColor: t.colors.bg, color: t.colors.text, borderColor: t.colors.border }]}
             placeholder="Add a note for the deliverer (optional)"
@@ -186,11 +191,17 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
         </View>
 
         {/* QR Code Status */}
-        <View style={[styles.section, { backgroundColor: t.colors.card, alignItems: 'center' }]}>
+        <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card, alignItems: 'center' }]}>
           {qrCodeImage ? (
-            <Text style={{ color: '#4caf50', fontWeight: 'bold' }}>QR Code Captured ✓</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <FontAwesome5 name="check-circle" size={18} color={t.colors.success} style={{ marginRight: 8 }} />
+              <Text style={[styles.qrSuccessText, { color: t.colors.success }]}>QR Code Captured</Text>
+            </View>
           ) : (
-            <Text style={{ color: t.colors.subtext }}>No QR code captured</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <FontAwesome5 name="qrcode" size={16} color={t.colors.subtext} style={{ marginRight: 8 }} />
+              <Text style={{ color: t.colors.subtext }}>No QR code captured</Text>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -227,13 +238,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
     marginBottom: 12,
   },
   canteenName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    // Handled by typography
   },
   itemRow: {
     flexDirection: 'row',
@@ -255,8 +263,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   totalPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    // Handled by typography
   },
   hallScroll: {
     flexDirection: 'row',
@@ -291,6 +298,9 @@ const styles = StyleSheet.create({
   placeOrderText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  qrSuccessText: {
     fontWeight: 'bold',
   },
 });

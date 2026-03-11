@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../constants/theme';
@@ -143,14 +144,32 @@ export default function EditProfileScreen({ navigation }: Props) {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={[styles.label, { color: t.colors.text }]}>Nickname</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
-            placeholder="Your display name"
-            placeholderTextColor="#999"
-            value={nickname}
-            onChangeText={setNickname}
-          />
+          <View style={styles.labelRow}>
+            <FontAwesome5 name="user" size={14} color={t.colors.accent} style={{ marginRight: 8 }} />
+            <Text style={[styles.label, t.typography.subhead, { color: t.colors.text }]}>Nickname</Text>
+          </View>
+          
+          <View style={[
+            styles.inputContainer, 
+            t.shadow.subtle, 
+            { 
+              borderRadius: t.radius.md, 
+              backgroundColor: t.colors.secondaryBg,
+              borderWidth: 1,
+              borderColor: t.colors.separator
+            }
+          ]}>
+            <TextInput
+              style={[styles.input, { 
+                color: t.colors.text, 
+                backgroundColor: 'transparent'
+              }]}
+              placeholder="Your display name"
+              placeholderTextColor={t.colors.subtext}
+              value={nickname}
+              onChangeText={setNickname}
+            />
+          </View>
 
           <ChipSelector
             label="Dorm Hall"
@@ -182,11 +201,11 @@ export default function EditProfileScreen({ navigation }: Props) {
           />
 
           <View style={styles.switchRow}>
-            <Text style={[styles.switchLabel, { color: t.colors.text }]}>I also want to deliver</Text>
+            <Text style={[styles.switchLabel, t.typography.subhead, { color: t.colors.text }]}>I also want to deliver</Text>
             <Switch
               value={isDeliverer}
               onValueChange={setIsDeliverer}
-              trackColor={{ false: '#ccc', true: '#003366' }}
+              trackColor={{ false: t.colors.secondaryBg, true: t.colors.accent }}
               thumbColor="#fff"
             />
           </View>
@@ -210,11 +229,12 @@ export default function EditProfileScreen({ navigation }: Props) {
           )}
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, { backgroundColor: t.colors.accent, borderRadius: t.radius.md }, loading && styles.buttonDisabled]}
             onPress={handleSubmit}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Save Changes'}</Text>
+            <FontAwesome5 name="check-circle" size={16} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={[styles.buttonText, t.typography.callout, { color: '#fff' }]}>{loading ? 'Saving...' : 'Save Changes'}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -226,23 +246,27 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
-
   content: {
     padding: 24,
     paddingBottom: 40,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
+  label: {
+    // typography handled inline
+  },
+  inputContainer: {
+    marginBottom: 20,
+    // radius handled inline
+  },
   input: {
-    borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    marginBottom: 20,
-    borderWidth: 1,
+    // height: 50,
   },
   switchRow: {
     flexDirection: 'row',
@@ -252,14 +276,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   switchLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    // typography handled inline
   },
   button: {
-    backgroundColor: '#003366',
-    borderRadius: 8,
+    flexDirection: 'row',
     paddingVertical: 16,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 20,
     marginBottom: 20,
   },
@@ -267,8 +290,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
     fontWeight: '600',
   },
   headerSpacer: {

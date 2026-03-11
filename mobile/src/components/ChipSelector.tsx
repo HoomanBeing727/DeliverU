@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 
 interface ChipSelectorProps {
@@ -18,6 +19,7 @@ export default function ChipSelector({
   multiple = true,
 }: ChipSelectorProps) {
   const t = useTheme();
+
   function handlePress(value: string) {
     if (multiple) {
       onToggle(value);
@@ -28,19 +30,50 @@ export default function ChipSelector({
 
   return (
     <View style={[styles.container, { marginBottom: t.spacing.lg }]}>
-      <Text style={[styles.label, { color: t.colors.text, marginBottom: t.spacing.sm }]}>{label}</Text>
+      <Text style={[styles.label, t.typography.subhead, { color: t.colors.text, marginBottom: t.spacing.sm }]}>
+        {label}
+      </Text>
       <View style={[styles.chipRow, { gap: t.spacing.sm }]}>
         {options.map((opt) => {
           const isSelected = selected.includes(opt);
           return (
             <TouchableOpacity
               key={opt}
-              style={[styles.chip, { borderColor: t.colors.border, backgroundColor: t.colors.card }, isSelected && { backgroundColor: t.colors.accent, borderColor: t.colors.accent }]}
+              style={[
+                styles.chip,
+                t.shadow.subtle,
+                { 
+                  borderColor: t.colors.border, 
+                  backgroundColor: t.colors.card,
+                  borderRadius: t.radius.pill,
+                },
+                isSelected && { 
+                  backgroundColor: t.colors.accentLight, 
+                  borderColor: t.colors.accent 
+                }
+              ]}
               onPress={() => handlePress(opt)}
             >
-              <Text style={[styles.chipText, { color: t.colors.text }, isSelected && { color: '#fff' }]}>
-                {opt}
-              </Text>
+              <View style={styles.chipContent}>
+                {isSelected && (
+                  <FontAwesome5 
+                    name="check" 
+                    size={10} 
+                    color={t.colors.accent} 
+                    style={{ marginRight: t.spacing.xs }}
+                  />
+                )}
+                <Text 
+                  style={[
+                    styles.chipText, 
+                    t.typography.footnote,
+                    { color: t.colors.text }, 
+                    isSelected && { color: t.colors.accent, fontWeight: '600' }
+                  ]}
+                >
+                  {opt}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -52,8 +85,7 @@ export default function ChipSelector({
 const styles = StyleSheet.create({
   container: {},
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    // handled by theme typography
   },
   chipRow: {
     flexDirection: 'row',
@@ -62,10 +94,14 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
     borderWidth: 1,
   },
+  chipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   chipText: {
-    fontSize: 13,
+    // handled by theme typography
   },
 });

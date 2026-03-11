@@ -7,6 +7,7 @@ import {
   Platform, 
   View
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 
 export type ToastType = 'success' | 'info' | 'warning';
@@ -17,12 +18,6 @@ interface Props {
   visible: boolean;
   onHide: () => void;
 }
-
-const COLORS = {
-  success: '#4caf50', // Green
-  info: '#2196f3',    // Blue
-  warning: '#ff9800', // Orange
-};
 
 const { width } = Dimensions.get('window');
 
@@ -59,20 +54,49 @@ export default function Toast({ message, type, visible, onHide }: Props) {
     };
   }, [visible, onHide, translateY]);
 
+  const getBackgroundColor = () => {
+    switch (type) {
+      case 'success': return t.colors.success;
+      case 'info': return t.colors.info;
+      case 'warning': return t.colors.warning;
+      default: return t.colors.info;
+    }
+  };
+
+  const getIconName = () => {
+    switch (type) {
+      case 'success': return 'check-circle';
+      case 'info': return 'info-circle';
+      case 'warning': return 'exclamation-triangle';
+      default: return 'info-circle';
+    }
+  };
+
   return (
     <Animated.View 
       style={[
         styles.container, 
         { 
-          backgroundColor: COLORS[type],
-          paddingBottom: t.spacing.md,
+          backgroundColor: getBackgroundColor(),
+          marginHorizontal: t.spacing.lg,
+          marginTop: Platform.OS === 'ios' ? 50 : 20,
+          borderRadius: t.radius.lg,
+          paddingVertical: t.spacing.md,
           paddingHorizontal: t.spacing.lg,
           ...t.shadow.floating,
           transform: [{ translateY }]
         }
       ]}
     >
-      <Text style={styles.text}>{message}</Text>
+      <View style={styles.content}>
+        <FontAwesome5 
+          name={getIconName()} 
+          size={18} 
+          color="#fff" 
+          style={{ marginRight: t.spacing.sm }}
+        />
+        <Text style={[styles.text, t.typography.subhead]}>{message}</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -84,14 +108,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 9999,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20, // Status bar padding
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   text: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    textAlign: 'left',
+    flexShrink: 1,
   },
 });

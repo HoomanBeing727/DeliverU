@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 
 interface Props {
@@ -36,11 +36,12 @@ export default function StarRating({
         disabled={disabled}
         activeOpacity={0.7}
       >
-        <Ionicons
-          name={filled ? 'star' : 'star-outline'}
+        <FontAwesome5
+          name="star"
+          solid={filled}
           size={size}
           color={filled ? actualFilled : actualEmpty}
-          style={{ marginHorizontal: 2 }}
+          style={{ marginHorizontal: t.spacing.xs }}
         />
       </TouchableOpacity>
     );

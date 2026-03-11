@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../constants/theme';
@@ -50,12 +51,13 @@ export default function MyDeliveriesScreen({ navigation }: Props) {
     <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
       <AppHeader title="My Deliveries" onBack={navigation.goBack} />
 
-      {orders.length === 0 ? (
+{orders.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { color: t.colors.subtext }]}>
+          <FontAwesome5 name="truck" size={48} color={t.colors.muted} style={{ marginBottom: 16 }} />
+          <Text style={[styles.emptyText, { color: t.colors.subtext, ...t.typography.body }]}>
             No active deliveries
           </Text>
-        </View>
+</View>
       ) : (
         <FlatList
           data={orders}
@@ -97,7 +99,7 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   emptyText: {
-    fontSize: 16,
     textAlign: 'center',
+    marginTop: 8,
   },
 });

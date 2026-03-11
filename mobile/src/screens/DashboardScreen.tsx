@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../constants/theme';
@@ -51,7 +52,7 @@ export default function DashboardScreen({ navigation }: Props) {
           .then(orders => setActiveDeliveryCount(orders.length))
           .catch(err => console.error('Failed to fetch active deliveries:', err));
       }
-    }, [])
+    }, [isDelivererMode])
   );
 
   async function handleDarkToggle(value: boolean) {
@@ -101,14 +102,14 @@ export default function DashboardScreen({ navigation }: Props) {
   return (
     <ScrollView style={[styles.container, { backgroundColor: t.colors.bg }]}>
       <View style={[styles.header, { paddingTop: insets.top + t.spacing.lg }]}>
-        <Text style={[styles.greeting, { color: t.colors.text }]}>
+        <Text style={[t.typography.largeTitle, { color: t.colors.text, marginBottom: 4 }]}>
           Hello, {user?.nickname ?? 'User'}!
         </Text>
-        <Text style={[styles.subGreeting, { color: t.colors.subtext }]}>
+        <Text style={[t.typography.footnote, { color: t.colors.subtext, marginBottom: 16 }]}>
           {user?.dorm_hall}
         </Text>
 
-        <Text style={[styles.creditsText, { color: t.colors.accent }]}>
+        <Text style={[t.typography.headline, { color: t.colors.accent, marginBottom: 24 }]}>
           {user?.credits ?? 0} DC
         </Text>
 
@@ -158,67 +159,110 @@ export default function DashboardScreen({ navigation }: Props) {
           /* Orderer View */
           <View style={styles.contentContainer}>
             <TouchableOpacity
-              style={[styles.card, { backgroundColor: t.colors.card }]}
+              style={[
+                styles.card,
+                { backgroundColor: t.colors.card, borderRadius: t.radius.lg },
+                t.shadow.card
+              ]}
               onPress={() => navigation.navigate('CanteenSelect')}
             >
-              <Text style={[styles.cardTitle, { color: t.colors.text }]}>Order Food</Text>
-              <Text style={[styles.cardDesc, { color: t.colors.subtext }]}>
-                Place a new delivery order
-              </Text>
+              <View style={styles.cardHeader}>
+                <FontAwesome5 name="utensils" size={24} color={t.colors.accent} style={styles.cardIcon} />
+                <View style={styles.cardTextContainer}>
+                  <Text style={[t.typography.headline, { color: t.colors.text }]}>Order Food</Text>
+                  <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
+                    Place a new delivery order
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.card, { backgroundColor: t.colors.card }]}
+              style={[
+                styles.card,
+                { backgroundColor: t.colors.card, borderRadius: t.radius.lg },
+                t.shadow.card
+              ]}
               onPress={() => navigation.navigate('MyOrders')}
             >
-              <Text style={[styles.cardTitle, { color: t.colors.text }]}>My Orders</Text>
-              <Text style={[styles.cardDesc, { color: t.colors.subtext }]}>
-                Track your active and past orders
-              </Text>
+              <View style={styles.cardHeader}>
+                <FontAwesome5 name="list-alt" size={24} color={t.colors.purple} style={styles.cardIcon} />
+                <View style={styles.cardTextContainer}>
+                  <Text style={[t.typography.headline, { color: t.colors.text }]}>My Orders</Text>
+                  <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
+                    Track your active and past orders
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
         ) : (
           /* Deliverer View */
           <View style={styles.contentContainer}>
             <TouchableOpacity
-              style={[styles.card, { backgroundColor: t.colors.card }]}
+              style={[
+                styles.card,
+                { backgroundColor: t.colors.card, borderRadius: t.radius.lg },
+                t.shadow.card
+              ]}
               onPress={() => navigation.navigate('MyDeliveries')}
             >
-              <Text style={[styles.cardTitle, { color: t.colors.text }]}>Active Orders</Text>
-              <Text style={[styles.cardDesc, { color: t.colors.subtext }]}>
-                {activeDeliveryCount === 0
-                  ? 'No active orders'
-                  : `${activeDeliveryCount} active order${activeDeliveryCount !== 1 ? 's' : ''}`}
-              </Text>
+              <View style={styles.cardHeader}>
+                <FontAwesome5 name="shipping-fast" size={24} color={t.colors.accent} style={styles.cardIcon} />
+                <View style={styles.cardTextContainer}>
+                  <Text style={[t.typography.headline, { color: t.colors.text }]}>Active Orders</Text>
+                  <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
+                    {activeDeliveryCount === 0
+                      ? 'No active orders'
+                      : `${activeDeliveryCount} active order${activeDeliveryCount !== 1 ? 's' : ''}`}
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.card, { backgroundColor: t.colors.card }]}
+              style={[
+                styles.card,
+                { backgroundColor: t.colors.card, borderRadius: t.radius.lg },
+                t.shadow.card
+              ]}
               onPress={() => navigation.navigate('DelivererQueue')}
             >
-              <Text style={[styles.cardTitle, { color: t.colors.text }]}>Available Orders</Text>
-              <Text style={[styles.cardDesc, { color: t.colors.subtext }]}>
-                Browse orders to deliver
-              </Text>
+              <View style={styles.cardHeader}>
+                <FontAwesome5 name="search" size={24} color={t.colors.teal} style={styles.cardIcon} />
+                <View style={styles.cardTextContainer}>
+                  <Text style={[t.typography.headline, { color: t.colors.text }]}>Available Orders</Text>
+                  <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
+                    Browse orders to deliver
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
         )}
       </Animated.View>
 
       {/* Leaderboard Section */}
-      <View style={[styles.section, { backgroundColor: t.colors.bg, padding: 0, shadowOpacity: 0, elevation: 0 }]}>
-        <Text style={[styles.sectionTitle, { color: t.colors.text, marginLeft: 4 }]}>Leaderboard</Text>
+      <View style={[styles.sectionContainer, { marginHorizontal: 24, marginBottom: 16 }]}>
+        <View style={styles.sectionHeaderRow}>
+          <FontAwesome5 name="trophy" size={16} color={t.colors.orange} style={{ marginRight: 8 }} />
+          <Text style={[t.typography.title3, { color: t.colors.text }]}>Leaderboard</Text>
+        </View>
 
         {/* Top Orderers */}
         <TouchableOpacity 
-          style={[styles.card, { backgroundColor: t.colors.card, alignItems: 'stretch' }]}
+          style={[
+            styles.sectionCard, 
+            { backgroundColor: t.colors.card, borderRadius: t.radius.lg, marginBottom: 16 },
+            t.shadow.card
+          ]}
           onPress={() => navigation.navigate('Leaderboard', { initialTab: 'orderers' })}
           activeOpacity={0.7}
         >
-          <Text style={[styles.cardTitle, { color: t.colors.text, textAlign: 'center', fontSize: 18 }]}>Top Orderers</Text>
+          <Text style={[t.typography.headline, { color: t.colors.text, textAlign: 'center', marginBottom: 12 }]}>Top Orderers</Text>
           {leaderboard?.top_orderers && leaderboard.top_orderers.length > 0 ? (
             leaderboard.top_orderers.map((entry, index) => (
-              <View key={entry.user_id} style={[styles.leaderboardRow, { borderBottomColor: t.colors.border }]}>
+              <View key={entry.user_id} style={[styles.leaderboardRow, { borderBottomColor: t.colors.separator }]}>
                 <Text style={[styles.leaderboardText, { color: t.colors.text }]}>
                   #{index + 1} {entry.nickname}
                 </Text>
@@ -234,14 +278,18 @@ export default function DashboardScreen({ navigation }: Props) {
 
         {/* Top Deliverers */}
         <TouchableOpacity 
-          style={[styles.card, { backgroundColor: t.colors.card, alignItems: 'stretch' }]}
+          style={[
+            styles.sectionCard, 
+            { backgroundColor: t.colors.card, borderRadius: t.radius.lg },
+            t.shadow.card
+          ]}
           onPress={() => navigation.navigate('Leaderboard', { initialTab: 'deliverers' })}
           activeOpacity={0.7}
         >
-          <Text style={[styles.cardTitle, { color: t.colors.text, textAlign: 'center', fontSize: 18 }]}>Top Deliverers</Text>
+          <Text style={[t.typography.headline, { color: t.colors.text, textAlign: 'center', marginBottom: 12 }]}>Top Deliverers</Text>
           {leaderboard?.top_deliverers && leaderboard.top_deliverers.length > 0 ? (
             leaderboard.top_deliverers.map((entry, index) => (
-              <View key={entry.user_id} style={[styles.leaderboardRow, { borderBottomColor: t.colors.border }]}>
+              <View key={entry.user_id} style={[styles.leaderboardRow, { borderBottomColor: t.colors.separator }]}>
                 <Text style={[styles.leaderboardText, { color: t.colors.text }]}>
                   #{index + 1} {entry.nickname}
                 </Text>
@@ -255,34 +303,47 @@ export default function DashboardScreen({ navigation }: Props) {
           )}
         </TouchableOpacity>
       </View>
+
       {/* Settings */}
-      <View style={[styles.section, { backgroundColor: t.colors.card, marginTop: 16 }]}>
-        <Text style={[styles.sectionTitle, { color: t.colors.text }]}>Settings</Text>
+      <View style={[styles.sectionContainer, { marginHorizontal: 24, marginBottom: 32 }]}>
+        <Text style={[t.typography.title3, { color: t.colors.text, marginBottom: 12, marginLeft: 4 }]}>Settings</Text>
 
-        <View style={styles.settingRow}>
-          <Text style={[styles.settingLabel, { color: t.colors.text }]}>Dark Mode</Text>
-          <Switch
-            value={user?.dark_mode ?? false}
-            onValueChange={handleDarkToggle}
-            trackColor={{ false: '#ccc', true: t.colors.accent }}
-            thumbColor="#fff"
-          />
+        <View style={[styles.settingsGroup, { backgroundColor: t.colors.card, borderRadius: t.radius.lg }, t.shadow.card]}>
+          <View style={[styles.settingRow, { borderBottomColor: t.colors.separator }]}>
+            <View style={styles.settingLabelContainer}>
+              <FontAwesome5 name="moon" size={16} color={t.colors.indigo} style={styles.settingIcon} />
+              <Text style={[styles.settingLabel, { color: t.colors.text }]}>Dark Mode</Text>
+            </View>
+            <Switch
+              value={user?.dark_mode ?? false}
+              onValueChange={handleDarkToggle}
+              trackColor={{ false: t.colors.secondaryBg, true: t.colors.accent }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.settingRow, { borderBottomColor: t.colors.separator }]}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <View style={styles.settingLabelContainer}>
+              <FontAwesome5 name="user-edit" size={16} color={t.colors.accent} style={styles.settingIcon} />
+              <Text style={[styles.settingLabel, { color: t.colors.text }]}>Edit Profile</Text>
+            </View>
+            <FontAwesome5 name="chevron-right" size={14} color={t.colors.subtext} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.settingRow, { borderBottomWidth: 0 }]} 
+            onPress={handleLogout}
+          >
+            <View style={styles.settingLabelContainer}>
+              <FontAwesome5 name="sign-out-alt" size={16} color={t.colors.danger} style={styles.settingIcon} />
+              <Text style={[styles.settingLabel, { color: t.colors.danger }]}>Sign Out</Text>
+            </View>
+            <FontAwesome5 name="chevron-right" size={14} color={t.colors.subtext} />
+          </TouchableOpacity>
         </View>
-
-        {/* Deliverer Mode Switch REMOVED */}
-
-        <TouchableOpacity
-          style={styles.settingRow}
-          onPress={() => navigation.navigate('EditProfile')}
-        >
-          <Text style={[styles.settingLabel, { color: t.colors.text }]}>Edit Profile</Text>
-          <Text style={[styles.chevron, { color: t.colors.subtext }]}>›</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.settingRow} onPress={handleLogout}>
-          <Text style={[styles.settingLabel, { color: t.colors.danger }]}>Sign Out</Text>
-          <Text style={[styles.chevron, { color: t.colors.danger }]}>›</Text>
-        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -294,22 +355,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 16, // Base padding - actual top padding set dynamically via insets
     paddingBottom: 24,
-  },
-  greeting: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  subGreeting: {
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 20,
-  },
-  creditsText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
   },
   toggleContainer: {
     flexDirection: 'row',
@@ -333,58 +379,58 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 20,
     marginBottom: 16,
-    alignItems: 'center',
   },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+  cardHeader: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardIcon: {
     marginBottom: 8,
   },
-  cardDesc: {
-    fontSize: 15,
+  cardTextContainer: {
+    alignItems: 'center',
   },
-  section: {
-    marginHorizontal: 24,
+  sectionContainer: {
     marginBottom: 16,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
+    marginLeft: 4,
+  },
+  sectionCard: {
+    padding: 20,
+    alignItems: 'stretch',
   },
   emptyText: {
     fontSize: 14,
     fontStyle: 'italic',
   },
+  settingsGroup: {
+    overflow: 'hidden',
+  },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#eee',
+  },
+  settingLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingIcon: {
+    marginRight: 12,
+    width: 20, 
+    textAlign: 'center',
   },
   settingLabel: {
-    fontSize: 15,
-  },
-  chevron: {
-    fontSize: 22,
-    fontWeight: '300',
+    fontSize: 17,
   },
   leaderboardRow: {
     flexDirection: 'row',

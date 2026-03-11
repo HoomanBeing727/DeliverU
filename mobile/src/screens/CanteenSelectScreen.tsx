@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  } from 'react-native';
-  import { NativeStackScreenProps } from '@react-navigation/native-stack';
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../constants/theme';
@@ -17,7 +18,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CanteenSelect'>;
 export default function CanteenSelectScreen({ navigation }: Props) {
   const { user } = useAuth();
   const t = useTheme();
-
 
   const canteens = [
     {
@@ -44,20 +44,31 @@ export default function CanteenSelectScreen({ navigation }: Props) {
     <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
       <AppHeader title="Select Canteen" onBack={() => navigation.goBack()} />
 
-
       <ScrollView contentContainerStyle={styles.content}>
         {canteens.map((c) => (
           <TouchableOpacity
             key={c.canteen}
-            style={[styles.card, { backgroundColor: t.colors.card, ...t.shadow.card }]}
+            style={[
+              styles.card,
+              { 
+                backgroundColor: t.colors.card, 
+                borderRadius: t.radius.lg,
+                ...t.shadow.card 
+              }
+            ]}
             onPress={() => navigation.navigate('CanteenWebView', { canteen: c.canteen, url: c.url })}
             activeOpacity={0.8}
           >
-            <View>
-              <Text style={[styles.canteenName, { color: t.colors.text }]}>{c.name}</Text>
-              <Text style={[styles.canteenDesc, { color: t.colors.subtext }]}>{c.desc}</Text>
+            <View style={styles.cardLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: t.colors.secondaryBg }]}>
+                <FontAwesome5 name="store" size={20} color={t.colors.accent} />
+              </View>
+              <View>
+                <Text style={[styles.canteenName, t.typography.headline, { color: t.colors.text }]}>{c.name}</Text>
+                <Text style={[styles.canteenDesc, t.typography.footnote, { color: t.colors.subtext }]}>{c.desc}</Text>
+              </View>
             </View>
-            <Text style={[styles.arrow, { color: t.colors.subtext }]}>›</Text>
+            <FontAwesome5 name="chevron-right" size={14} color={t.colors.subtext} />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -69,29 +80,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    height: 60,
-    // paddingTop handled by SafeAreaView
-  },
-  backButton: {
-    padding: 10,
-    marginLeft: -10,
-  },
-  backButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  headerRight: {
-    width: 40, 
-  },
   content: {
     padding: 20,
   },
@@ -99,22 +87,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    borderRadius: 12,
+    padding: 16,
     marginBottom: 16,
-    // Shadow applied via t.shadow.card spread in component
-    elevation: 2,
+  },
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   canteenName: {
-    fontSize: 18,
-    fontWeight: 'bold',
     marginBottom: 4,
   },
   canteenDesc: {
-    fontSize: 14,
-  },
-  arrow: {
-    fontSize: 24,
-    fontWeight: '300',
+    // Handled by theme typography
   },
 });

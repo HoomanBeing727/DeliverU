@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
+View,
+Text,
+TextInput,
+TouchableOpacity,
+FlatList,
+StyleSheet,
+KeyboardAvoidingView,
+Platform,
+ActivityIndicator,
 } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, ChatMessage } from '../types';
 import { getMessages, sendMessage } from '../api/chat';
@@ -84,7 +85,7 @@ export default function ChatScreen({ route, navigation }: Props) {
     if (item.message_type === 'system') {
       return (
         <View style={styles.systemMessageContainer}>
-          <Text style={[styles.systemMessageText, { color: t.colors.subtext }]}>
+          <Text style={[styles.systemMessageText, t.typography.caption, { color: t.colors.subtext }]}>
             {item.content}
           </Text>
         </View>
@@ -99,21 +100,23 @@ export default function ChatScreen({ route, navigation }: Props) {
         isMe ? styles.myMessageRow : styles.otherMessageRow
       ]}>
         {!isMe && (
-          <Text style={[styles.senderName, { color: t.colors.subtext }]}>
+          <Text style={[styles.senderName, t.typography.caption2, { color: t.colors.subtext }]}>
             {item.sender_nickname}
           </Text>
         )}
-        <View style={[
-          styles.bubble,
-          isMe ? { backgroundColor: t.colors.accent } : { backgroundColor: t.colors.card }
-        ]}>
-          <Text style={[
-            styles.messageText,
-            isMe ? { color: '#FFFFFF' } : { color: t.colors.text }
-          ]}>
-            {item.content}
-          </Text>
-        </View>
+<View style={[
+styles.bubble,
+{ borderRadius: t.radius.pill },
+isMe ? { backgroundColor: t.colors.accent } : { backgroundColor: t.colors.card }
+]}>
+<Text style={[
+styles.messageText,
+t.typography.body,
+isMe ? { color: '#FFFFFF' } : { color: t.colors.text }
+]}>
+{item.content}
+</Text>
+</View>
       </View>
     );
   };
@@ -143,9 +146,9 @@ export default function ChatScreen({ route, navigation }: Props) {
           />
         )}
 
-        <View style={[styles.inputContainer, { backgroundColor: t.colors.card, borderTopColor: t.colors.border }]}>
+          <View style={[styles.inputContainer, { backgroundColor: t.colors.card, borderTopColor: t.colors.border }]}>
           <TextInput
-            style={[styles.input, { color: t.colors.text, backgroundColor: t.colors.bg }]}
+            style={[styles.input, { color: t.colors.text, backgroundColor: t.colors.bg, borderRadius: t.radius.pill }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Type a message..."
@@ -157,7 +160,7 @@ export default function ChatScreen({ route, navigation }: Props) {
             onPress={handleSend}
             disabled={!inputText.trim() || sending}
           >
-            <Text style={[styles.sendButtonText, { color: t.colors.accent }]}>Send</Text>
+            <FontAwesome5 name="paper-plane" size={20} color={t.colors.accent} solid />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -169,24 +172,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-  },
-  headerBackButton: {
-    width: 60,
-  },
-  headerBackText: {
-    fontSize: 16,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
+
   keyboardView: {
     flex: 1,
   },

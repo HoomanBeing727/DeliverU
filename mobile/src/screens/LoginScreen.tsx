@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 import { RootStackParamList } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -50,39 +51,77 @@ export default function LoginScreen({ navigation }: Props) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.inner}>
-        <Text style={[styles.title, { color: t.colors.accent }]}>DeliverU</Text>
-        <Text style={[styles.subtitle, { color: t.colors.subtext }]}>Sign in with your HKUST email</Text>
+        <View style={styles.header}>
+          <FontAwesome5 name="paper-plane" size={40} color={t.colors.accent} style={styles.headerIcon} />
+          <Text style={[t.typography.largeTitle, { color: t.colors.text, textAlign: 'center' }]}>DeliverU</Text>
+          <Text style={[t.typography.footnote, { color: t.colors.subtext, textAlign: 'center', marginTop: 8 }]}>
+            Sign in with your HKUST email
+          </Text>
+        </View>
 
-        <TextInput
-          style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
-          placeholder="Email (@connect.ust.hk)"
-          placeholderTextColor={t.colors.subtext}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+        <View style={[
+          styles.inputContainer,
+          { 
+            backgroundColor: t.colors.secondaryBg,
+            borderColor: t.colors.separator,
+            borderRadius: t.radius.lg 
+          },
+          t.shadow.subtle
+        ]}>
+          <FontAwesome5 name="envelope" size={18} color={t.colors.subtext} style={styles.inputIcon} />
+          <TextInput
+            style={[styles.input, { color: t.colors.text }]}
+            placeholder="Email (@connect.ust.hk)"
+            placeholderTextColor={t.colors.subtext}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
 
-        <TextInput
-          style={[styles.input, { backgroundColor: t.colors.card, color: t.colors.text, borderColor: t.colors.border }]}
-          placeholder="Password"
-          placeholderTextColor={t.colors.subtext}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={[
+          styles.inputContainer,
+          { 
+            backgroundColor: t.colors.secondaryBg,
+            borderColor: t.colors.separator,
+            borderRadius: t.radius.lg 
+          },
+          t.shadow.subtle
+        ]}>
+          <FontAwesome5 name="lock" size={18} color={t.colors.subtext} style={styles.inputIcon} />
+          <TextInput
+            style={[styles.input, { color: t.colors.text }]}
+            placeholder="Password"
+            placeholderTextColor={t.colors.subtext}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+        </View>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: t.colors.accent }, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            { backgroundColor: t.colors.accent, borderRadius: t.radius.md },
+            loading && styles.buttonDisabled
+          ]}
           onPress={handleLogin}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
+          {loading ? (
+             <Text style={[t.typography.headline, styles.buttonText]}>Signing in...</Text>
+          ) : (
+            <View style={styles.buttonContent}>
+              <FontAwesome5 name="sign-in-alt" size={16} color="#fff" style={styles.buttonIcon} />
+              <Text style={[t.typography.headline, styles.buttonText]}>Sign In</Text>
+            </View>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={[styles.linkText, { color: t.colors.subtext }]}>
-            Don't have an account? <Text style={[styles.linkBold, { color: t.colors.accent }]}>Register</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.linkButton}>
+          <Text style={[t.typography.footnote, { color: t.colors.subtext, textAlign: 'center' }]}>
+            Don't have an account? <Text style={{ color: t.colors.accent, fontWeight: '600' }}>Register</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -99,44 +138,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 8,
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
   },
-  subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 32,
+  headerIcon: {
+    marginBottom: 16,
   },
-  input: {
-    borderRadius: 8,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
+    height: 56,
     marginBottom: 16,
     borderWidth: 1,
   },
+  inputIcon: {
+    marginRight: 12,
+    width: 20,
+    textAlign: 'center',
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
+  },
   button: {
-    borderRadius: 8,
-    paddingVertical: 16,
+    height: 50,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
-  linkText: {
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  linkBold: {
-    fontWeight: '600',
+  linkButton: {
+    padding: 8,
   },
 });

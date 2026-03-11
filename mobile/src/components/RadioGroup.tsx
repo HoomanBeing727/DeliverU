@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 
 interface RadioOption {
@@ -18,19 +19,46 @@ export default function RadioGroup({ label, options, selected, onSelect }: Radio
   const t = useTheme();
   return (
     <View style={[styles.container, { marginBottom: t.spacing.lg }]}>
-      <Text style={[styles.label, { color: t.colors.text, marginBottom: t.spacing.sm }]}>{label}</Text>
+      <Text style={[styles.label, t.typography.subhead, { color: t.colors.text, marginBottom: t.spacing.sm }]}>
+        {label}
+      </Text>
       {options.map((opt) => {
         const isSelected = selected === opt.value;
         return (
           <TouchableOpacity
             key={opt.value}
-            style={[styles.row, { paddingVertical: t.spacing.sm }]}
+            style={[
+              styles.row, 
+              { 
+                paddingVertical: t.spacing.sm,
+                paddingHorizontal: t.spacing.sm,
+                borderRadius: t.radius.md
+              },
+              isSelected && { backgroundColor: t.colors.accentLight }
+            ]}
             onPress={() => onSelect(opt.value)}
           >
-            <View style={[styles.radio, { borderColor: t.colors.border }, isSelected && { borderColor: t.colors.accent }]}>
-              {isSelected && <View style={[styles.radioInner, { backgroundColor: t.colors.accent }]} />}
+            <View 
+              style={[
+                styles.radio, 
+                { 
+                  borderColor: isSelected ? t.colors.accent : t.colors.separator,
+                  marginRight: t.spacing.sm 
+                }
+              ]}
+            >
+              {isSelected && (
+                <View 
+                  style={[
+                    styles.radioInner, 
+                    { backgroundColor: t.colors.accent }
+                  ]} 
+                />
+              )}
             </View>
-            <Text style={[styles.optionText, { color: t.colors.text }]}>{opt.label}</Text>
+            <Text style={[styles.optionText, t.typography.callout, { color: t.colors.text }]}>
+              {opt.label}
+            </Text>
           </TouchableOpacity>
         );
       })}
@@ -41,8 +69,7 @@ export default function RadioGroup({ label, options, selected, onSelect }: Radio
 const styles = StyleSheet.create({
   container: {},
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    // handled by theme
   },
   row: {
     flexDirection: 'row',
@@ -55,14 +82,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
   },
   radioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
   optionText: {
-    fontSize: 15,
+    // handled by theme
   },
 });

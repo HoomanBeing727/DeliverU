@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 
 interface AppHeaderProps {
@@ -20,15 +21,16 @@ export default function AppHeader({ title, onBack, right }: AppHeaderProps) {
         { 
           paddingTop: insets.top + t.spacing.md,
           paddingHorizontal: t.spacing.lg,
+          paddingBottom: t.spacing.md,
           backgroundColor: t.colors.card,
-          borderBottomColor: t.colors.border
-        }
+        },
+        t.shadow.subtle
       ]}
     >
       <View style={styles.content}>
         {onBack && (
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={[styles.backText, { color: t.colors.accent }]}>←</Text>
+          <TouchableOpacity onPress={onBack} style={[styles.backButton, { marginRight: t.spacing.md }]}>
+            <FontAwesome5 name="arrow-left" size={18} color={t.colors.accent} />
           </TouchableOpacity>
         )}
         <Text 
@@ -40,7 +42,7 @@ export default function AppHeader({ title, onBack, right }: AppHeaderProps) {
         >
           {title}
         </Text>
-        {right && <View style={styles.rightContainer}>{right}</View>}
+        {right && <View style={[styles.rightContainer, { marginLeft: t.spacing.md }]}>{right}</View>}
       </View>
     </View>
   );
@@ -48,8 +50,8 @@ export default function AppHeader({ title, onBack, right }: AppHeaderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 16,
-    borderBottomWidth: 1,
+    // shadow handled by theme
+    zIndex: 1, // Ensure shadow is visible
   },
   content: {
     flexDirection: 'row',
@@ -57,16 +59,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   backButton: {
-    marginRight: 12,
-  },
-  backText: {
-    fontSize: 24,
-    fontWeight: '600',
+    // margin handled inline
   },
   title: {
     flex: 1,
   },
   rightContainer: {
-    marginLeft: 12,
+    // margin handled inline
   },
 });
