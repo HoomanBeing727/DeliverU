@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routers import auth, users, orders, credits, qr, stats, ratings, chat
 from models.message import ChatMessage
+from models.group_order_join_request import GroupOrderJoinRequest
 
 
 @asynccontextmanager
