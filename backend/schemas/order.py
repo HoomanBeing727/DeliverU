@@ -28,6 +28,7 @@ class OrderCreateRequest(BaseModel):
     note: str | None = None
     qr_code_image: str | None = None
     qr_code_data: str | None = None
+    is_group_open: bool = False
 
     @field_validator("canteen")
     @classmethod
@@ -59,6 +60,9 @@ class OrderResponse(BaseModel):
     qr_code_image: str | None
     qr_code_data: str | None
     note: str | None
+    group_order_id: str | None
+    is_group_open: bool
+    participant_count: int = 0
     orderer_nickname: str
     deliverer_nickname: str | None
     created_at: datetime
@@ -79,7 +83,45 @@ class OrderStatusUpdate(BaseModel):
     @classmethod
     def valid_status(cls, v: str) -> str:
         if v not in VALID_ORDER_STATUSES:
-            raise ValueError(
-                f"Invalid status. Must be one of: {VALID_ORDER_STATUSES}"
-            )
+            raise ValueError(f"Invalid status. Must be one of: {VALID_ORDER_STATUSES}")
         return v
+
+
+class GroupOrderJoinRequestCreate(BaseModel):
+    """Schema for creating a join request to a group order."""
+
+    note: str | None = None
+
+
+class GroupOrderJoinRequestResponse(BaseModel):
+    """Schema for returning join request data."""
+
+    id: str
+    root_order_id: str
+    requester_id: str
+    requester_nickname: str
+    status: str
+    note: str | None
+    created_at: datetime
+    decided_at: datetime | None
+    decided_by_user_id: str | None
+    decision_reason: str | None
+
+    model_config = {"from_attributes": True}
+
+
+class GroupOrderJoinRequestDecision(BaseModel):
+    """Schema for responding to a join request."""
+
+    reason: str | None = None
+
+
+class GroupOrderResponse(BaseModel):
+    """Schema for group order summary."""
+
+    root_order: OrderResponse
+    participants: list[OrderResponse]
+    total_participants: int
+    is_open: bool
+    my_join_request: GroupOrderJoinRequestResponse | None = None
+    pending_join_requests_count: int = 0
