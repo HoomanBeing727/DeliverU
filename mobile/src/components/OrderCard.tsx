@@ -101,6 +101,18 @@ export default function OrderCard({ order, onPress }: Props) {
             {order.delivery_hall}
           </Text>
         </View>
+
+        {order.is_group_open && (
+          <View style={[styles.row, { marginBottom: t.spacing.xs }]}>
+            <View style={styles.iconLabel}>
+              <FontAwesome5 name="users" size={13} color={t.colors.purple} style={{ width: 20 }} />
+              <Text style={[styles.label, t.typography.body, { color: t.colors.subtext }]}>Group</Text>
+            </View>
+            <Text style={[styles.value, t.typography.subhead, { color: t.colors.purple }]}>
+              {order.participant_count + 1} participant{order.participant_count !== 0 ? 's' : ''}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={[styles.divider, { backgroundColor: t.colors.bg, marginBottom: t.spacing.md }]} />

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -30,6 +31,7 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
   );
   const [deliveryHall, setDeliveryHall] = useState<string>(user?.dorm_hall ?? 'Hall I');
   const [note, setNote] = useState('');
+  const [isGroupOpen, setIsGroupOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const totalPrice = items.reduce((sum, i) => sum + i.qty * i.price, 0);
@@ -78,6 +80,7 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
         note: note.trim() || null,
         qr_code_image: qrCodeImage,
         qr_code_data: qrCodeData,
+        is_group_open: isGroupOpen,
       };
       await createOrder(payload);
       Alert.alert('Success', 'Order placed successfully!', [
@@ -188,6 +191,27 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
             value={note}
             onChangeText={setNote}
           />
+        </View>
+
+        {/* Group Order Toggle */}
+        <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card }]}>
+          <View style={styles.groupToggleRow}>
+            <View style={styles.groupToggleLabel}>
+              <FontAwesome5 name="users" size={16} color={t.colors.purple} style={{ marginRight: 10 }} />
+              <View>
+                <Text style={[t.typography.headline, { color: t.colors.text }]}>Open for Group Join</Text>
+                <Text style={[t.typography.caption, { color: t.colors.subtext, marginTop: 2 }]}>
+                  Let hallmates join your order
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={isGroupOpen}
+              onValueChange={setIsGroupOpen}
+              trackColor={{ false: t.colors.secondaryBg, true: t.colors.accent }}
+              thumbColor="#fff"
+            />
+          </View>
         </View>
 
         {/* QR Code Status */}
@@ -302,5 +326,15 @@ const styles = StyleSheet.create({
   },
   qrSuccessText: {
     fontWeight: 'bold',
+  },
+  groupToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  groupToggleLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
 });

@@ -461,6 +461,41 @@ default: return t.colors.subtext;
           </View>
         )}
 
+        {isDeliverer && !order.group_order_id && order.is_group_open && order.status === 'accepted' && (
+          <View style={[styles.section, { 
+            backgroundColor: t.colors.card, 
+            borderRadius: t.radius.lg,
+            ...t.shadow.card 
+          }]}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: t.colors.purple, borderRadius: t.radius.lg }]}
+              onPress={() => navigation.navigate('GroupOrderDetail', { rootOrderId: order.id })}
+            >
+              <FontAwesome5 name="user-friends" size={16} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.buttonText}>Group Requests</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {isOrderer && (order.status === 'pending' || order.status === 'accepted' || order.status === 'picked_up') && (
+          <View style={[styles.section, { 
+            backgroundColor: t.colors.card, 
+            borderRadius: t.radius.lg,
+            ...t.shadow.card 
+          }]}>
+            <TouchableOpacity
+              style={[styles.ustDashButton, { backgroundColor: t.colors.orange, borderRadius: t.radius.lg }]}
+              onPress={() => navigation.navigate('USTDash', { orderId: order.id })}
+            >
+              <FontAwesome5 name="gamepad" size={16} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.buttonText}>Play UST Dash</Text>
+            </TouchableOpacity>
+            <Text style={[styles.ustDashHint, { color: t.colors.subtext }]}>
+              Kill time while waiting for your order!
+            </Text>
+          </View>
+        )}
+
         {/* Rating Section - Only for delivered orders */}
         {/* Rating Section - Only for delivered orders */}
         {order.status === 'delivered' && (
@@ -775,5 +810,16 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 8,
-  }
+  },
+  ustDashButton: {
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ustDashHint: {
+    textAlign: 'center',
+    fontSize: 12,
+    marginTop: 8,
+  },
 });

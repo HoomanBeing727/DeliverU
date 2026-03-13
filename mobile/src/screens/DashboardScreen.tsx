@@ -219,6 +219,61 @@ export default function DashboardScreen({ navigation }: Props) {
                 </View>
               </View>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.card,
+                { backgroundColor: t.colors.card, borderRadius: t.radius.lg },
+                t.shadow.card
+              ]}
+              onPress={() => navigation.navigate('LuckyDrawWheel')}
+            >
+              <View style={styles.cardHeader}>
+                <FontAwesome5 name="dice" size={24} color={t.colors.orange} style={styles.cardIcon} />
+                <View style={styles.cardTextContainer}>
+                  <Text style={[t.typography.headline, { color: t.colors.text }]}>What Should I Eat?</Text>
+                  <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
+                    Spin the wheel to decide!
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.card,
+                { 
+                  backgroundColor: user?.dorm_hall ? t.colors.card : t.colors.groupedBg,
+                  borderRadius: t.radius.lg,
+                  opacity: user?.dorm_hall ? 1 : 0.6,
+                },
+                t.shadow.card
+              ]}
+              onPress={() => {
+                if (!user?.dorm_hall) {
+                  Alert.alert(
+                    'Dorm hall required',
+                    'Set your dorm hall in Edit Profile to use Group Orders.',
+                    [
+                      { text: 'Edit Profile', onPress: () => navigation.navigate('EditProfile') },
+                      { text: 'Cancel', style: 'cancel' }
+                    ]
+                  );
+                } else {
+                  navigation.navigate('GroupOrdersHallBoard');
+                }
+              }}
+            >
+              <View style={styles.cardHeader}>
+                <FontAwesome5 name="users" size={24} color={t.colors.teal} style={styles.cardIcon} />
+                <View style={styles.cardTextContainer}>
+                  <Text style={[t.typography.headline, { color: t.colors.text }]}>Group Orders</Text>
+                  <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
+                    {user?.dorm_hall ? 'Join or browse shared hall orders' : 'Set your dorm hall in Profile to use Group Orders'}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
           </View>
         ) : (
           /* Deliverer View */

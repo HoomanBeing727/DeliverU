@@ -19,6 +19,11 @@ import MyDeliveriesScreen from '../screens/MyDeliveriesScreen';
 
 import ChatScreen from '../screens/ChatScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
+import LuckyDrawWheelScreen from '../screens/LuckyDrawWheelScreen';
+import USTDashScreen from '../screens/USTDashScreen';
+import GroupOrdersHallBoardScreen from '../screens/GroupOrdersHallBoardScreen';
+import GroupOrderDetailScreen from '../screens/GroupOrderDetailScreen';
+import GroupOrderJoinScreen from '../screens/GroupOrderJoinScreen';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
@@ -55,6 +60,11 @@ export default function RootNavigator() {
           <Stack.Screen name="MyOrders" component={MyOrdersScreen} />
           <Stack.Screen name="ChatScreen" component={ChatScreen} />
           <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
+          <Stack.Screen name="LuckyDrawWheel" component={LuckyDrawWheelScreen} />
+          <Stack.Screen name="USTDash" component={USTDashScreen} />
+          <Stack.Screen name="GroupOrdersHallBoard" component={GroupOrdersHallBoardScreen} />
+          <Stack.Screen name="GroupOrderDetail" component={GroupOrderDetailScreen} />
+          <Stack.Screen name="GroupOrderJoin" component={GroupOrderJoinScreen} />
         </>
 
       )}
