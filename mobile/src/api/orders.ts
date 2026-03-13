@@ -9,6 +9,7 @@ export interface CreateOrderPayload {
   note?: string | null;
   qr_code_image?: string | null;
   qr_code_data?: string | null;
+  is_group_open?: boolean;
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<Order> {

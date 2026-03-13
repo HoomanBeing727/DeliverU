@@ -10,12 +10,14 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [message, setMessage] = useState('');
   const [type, setType] = useState<ToastType>('info');
 
   const showToast = useCallback((msg: string, t: ToastType) => {
     setMessage(msg);
     setType(t);
+    setMounted(true);
     setVisible(true);
   }, []);
 
@@ -23,15 +25,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setVisible(false);
   }, []);
 
+  const handleHidden = useCallback(() => {
+    setMounted(false);
+  }, []);
+
   return (
     <ToastContext.Provider value={{ showToast, hideToast }}>
       {children}
-      <Toast 
-        message={message}
-        type={type}
-        visible={visible}
-        onHide={hideToast}
-      />
+      {mounted && (
+        <Toast 
+          message={message}
+          type={type}
+          visible={visible}
+          onHide={hideToast}
+          onHidden={handleHidden}
+        />
+      )}
     </ToastContext.Provider>
   );
 }

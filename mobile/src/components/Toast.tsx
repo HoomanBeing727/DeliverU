@@ -7,6 +7,7 @@ import {
   Platform, 
   View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 
@@ -17,12 +18,14 @@ interface Props {
   type: ToastType;
   visible: boolean;
   onHide: () => void;
+  onHidden?: () => void;
 }
 
 const { width } = Dimensions.get('window');
 
-export default function Toast({ message, type, visible, onHide }: Props) {
+export default function Toast({ message, type, visible, onHide, onHidden }: Props) {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
@@ -46,13 +49,15 @@ export default function Toast({ message, type, visible, onHide }: Props) {
         toValue: -100,
         duration: 300,
         useNativeDriver: true,
-      }).start();
+      }).start(() => {
+        onHidden?.();
+      });
     }
 
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [visible, onHide, translateY]);
+  }, [visible, onHide, onHidden, translateY]);
 
   const getBackgroundColor = () => {
     switch (type) {
@@ -79,7 +84,7 @@ export default function Toast({ message, type, visible, onHide }: Props) {
         { 
           backgroundColor: getBackgroundColor(),
           marginHorizontal: t.spacing.lg,
-          marginTop: Platform.OS === 'ios' ? 50 : 20,
+          marginTop: insets.top + t.spacing.md,
           borderRadius: t.radius.lg,
           paddingVertical: t.spacing.md,
           paddingHorizontal: t.spacing.lg,
