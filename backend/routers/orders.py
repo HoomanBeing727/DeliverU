@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from middleware.auth_middleware import get_current_user
-from models.group_order_join_request import GroupOrderJoinRequest
 from models.order import Order
 from models.user import User
 from schemas.order import (
+    GroupOrderJoinRequest,
     GroupOrderJoinRequestCreate,
     GroupOrderJoinRequestDecision,
     GroupOrderJoinRequestResponse,
@@ -276,7 +276,7 @@ async def get_group_order_detail(
 )
 async def join_group(
     root_order_id: str,
-    body: GroupOrderJoinRequestCreate,
+    body: GroupOrderJoinRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

@@ -93,6 +93,9 @@ class GroupOrderJoinRequestCreate(BaseModel):
     note: str | None = None
 
 
+GroupOrderJoinRequest = GroupOrderJoinRequestCreate
+
+
 class GroupOrderJoinRequestResponse(BaseModel):
     """Schema for returning join request data."""
 
