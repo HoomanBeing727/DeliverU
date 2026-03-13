@@ -492,7 +492,84 @@ sql_more
 
 ### Technical Notes
 - Extend user schema with fields: `battle_points`, `tier`, `custom_theme`  
-- Rewards stored client-side for immediate UI updates  
+- Rewards stored client-side for immediate UI updates 
+
+---
+
+## 🍔 6. Favourite Item Notification System *(DeliverU 2.0 Expansion)*
+
+**Purpose:** Allow users to mark their favourite menu items and receive smart notifications when those items appear (or disappear) in the available menus.
+
+---
+
+### 🎯 Overview
+Students can **“favourite”** specific food items (e.g., *LG7 Chicken Rice*, *Subway Tuna Sandwich*) so they never miss when their favourite food is available again.  
+
+DeliverU automatically monitors menu updates from canteens and nearby restaurants and triggers **contextual notifications** only when changes occur.
+
+---
+
+### ⚙️ Core Logic
+
+#### User Actions
+- Tap ❤️ to **favourite** any menu item from the order screen.
+- All favourites are saved under the user’s profile (`favourites` array in database).
+
+#### Detection Logic (Server-Side)
+1. DeliverU backend listens for **menu update events** (additions/removals from canteen or restaurant listings).  
+2. When a menu change occurs:
+   - Compare new menu items against all users’ favourites.
+   - If an item **was added** and matches a favourite → trigger **popup notification**.
+   - If an item **was removed** and matches a favourite → trigger **popup notification**.
+
+✅ The system **does not repeatedly notify** unless a real “add” or “remove” event is detected, preventing spam notifications.
+
+---
+
+### 🔔 Notification Behavior
+
+| Event | Notification Example | Type |
+|--------|----------------------|------|
+| Item added | “🍱 Good news! Your favourite *LG7 Curry Fish Ball* is back on the menu!” | Pop-up + Push |
+| Item removed | “⚠️ *Subway Chicken Teriyaki* is currently unavailable.” | Pop-up |
+
+- Notifications are **actionable** — tapping leads directly to the related canteen’s order screen.
+- Users can toggle favourite alerts in *Settings → Notifications*.
+
+---
+
+### 📊 Favourite Item Dashboard
+
+**Purpose:** Provide a quick overview of current favourite items and their live availability status.
+
+#### UI Sections
+- **Available Now:** shows favourites currently in menu  
+- **Unavailable:** shows favourites temporarily removed  
+- **Recently Changed:** highlights recent reappearances  
+
+#### Example Layout
+| Item | Location | Status | Action |
+|------|-----------|--------|---------|
+| Chicken Rice | LG7 | ✅ Available | [Order Now] |
+| Tuna Sandwich | Subway | ❌ Unavailable | — |
+| Spaghetti Bolognese | LG1 | ⚠️ Restocked 2h ago | [Order] |
+
+---
+
+### 🧠 Technical Notes
+- Table: `favourite_items`  
+  - Fields: `user_id`, `item_id`, `item_name`, `canteen_id`, `availability_status`, `last_notified`
+- Backend runs **diff comparison** between new and cached menu states to detect changes.  
+- Notification queue throttled to avoid multiple pushes in a short interval.  
+- Integrates with existing **Firebase Cloud Messaging (FCM)** for delivery.  
+
+---
+
+### 🌟 Benefits
+- Keeps users **engaged** with personalized updates.  
+- Encourages higher **order frequency**.  
+- Promotes **canteen menu transparency** and discovery.  
+- Maintains notification sanity with **event-based triggers only** (no spamming).
 
 ---
 
@@ -505,6 +582,7 @@ sql_more
 | Mini Waiting Game | Downtime entertainment | 🎮 Medium | ⚙️ Medium |
 | User Card & Popularity | Social retention + identity | ❤️ High | ⚙️ Medium–High |
 | Battle Pass | Long-term progression | 🔁 Very High | ⚙️ High |
+| Favourite Item Notifications | Personalization & engagement | 🎯 Medium | 🔧 Medium |
 
 ---
 
