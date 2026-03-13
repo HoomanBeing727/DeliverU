@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, Float, Integer, Text, DateTime, JSON, ForeignKey
+from sqlalchemy import Boolean, String, Float, Integer, Text, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database import Base
@@ -32,6 +32,10 @@ class Order(Base):
         String, nullable=True, default=None
     )
     note: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    group_order_id: Mapped[str | None] = mapped_column(
+        String, ForeignKey("orders.id"), nullable=True, default=None
+    )
+    is_group_open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
