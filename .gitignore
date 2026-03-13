@@ -1,5 +1,5 @@
-# Large Models
-models/
+# Large Models (ML weights, NOT backend/models/)
+*.gguf
 *.gguf
 
 # Python
