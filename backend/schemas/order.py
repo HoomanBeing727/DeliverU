@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import ClassVar
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from schemas.user import VALID_HALLS
 
@@ -71,7 +72,7 @@ class OrderResponse(BaseModel):
     delivered_at: datetime | None
     cancelled_at: datetime | None
 
-    model_config = {"from_attributes": True}
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
 
 
 class OrderStatusUpdate(BaseModel):
@@ -110,7 +111,7 @@ class GroupOrderJoinRequestResponse(BaseModel):
     decided_by_user_id: str | None
     decision_reason: str | None
 
-    model_config = {"from_attributes": True}
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
 
 
 class GroupOrderJoinRequestDecision(BaseModel):

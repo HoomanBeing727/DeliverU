@@ -1,13 +1,24 @@
+# pyright: reportCallInDefaultInitializer=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnusedVariable=false
+
+from typing import cast
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_db
+from database import get_db  # pyright: ignore[reportImplicitRelativeImport]
 from middleware.auth_middleware import get_current_user
+from models.group_order_join_request import (
+    GroupOrderJoinRequest as GroupOrderJoinRequestModel,
+)
 from models.order import Order
 from models.user import User
 from schemas.order import (
-    GroupOrderJoinRequest,
     GroupOrderJoinRequestCreate,
     GroupOrderJoinRequestDecision,
     GroupOrderJoinRequestResponse,
@@ -54,7 +65,10 @@ def _order_to_response(
         deliverer_id=str(order.deliverer_id) if order.deliverer_id else None,
         status=order.status,
         canteen=order.canteen,
-        items=[OrderItemSchema(**item) for item in order.items],
+        items=[
+            OrderItemSchema.model_validate(cast(dict[str, object], item))
+            for item in order.items
+        ],
         total_price=order.total_price,
         delivery_hall=order.delivery_hall,
         delivery_preference=order.delivery_preference,
@@ -161,7 +175,13 @@ async def get_open_group_orders(
     if not user.dorm_hall:
         return []  # No hall set -> no group orders visible
 
-    orders = await get_hall_open_group_orders(db, user.dorm_hall)
+    if hall and hall != user.dorm_hall:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only view group orders from your own hall",
+        )
+
+    orders = await get_hall_open_group_orders(db, hall or user.dorm_hall)
     responses = []
     for order in orders:
         resp = await _get_order_response(db, order)
@@ -222,9 +242,9 @@ async def get_group_order_detail(
     root_resp.participant_count = len(participants)
 
     my_request_result = await db.execute(
-        sa_select(GroupOrderJoinRequest).where(
-            (GroupOrderJoinRequest.root_order_id == root_order_id)
-            & (GroupOrderJoinRequest.requester_id == user.id)
+        sa_select(GroupOrderJoinRequestModel).where(
+            (GroupOrderJoinRequestModel.root_order_id == root_order_id)
+            & (GroupOrderJoinRequestModel.requester_id == user.id)
         )
     )
     my_request = my_request_result.scalar_one_or_none()
@@ -252,9 +272,9 @@ async def get_group_order_detail(
     pending_count = 0
     if is_deliverer:
         pending_count_result = await db.execute(
-            sa_select(GroupOrderJoinRequest).where(
-                (GroupOrderJoinRequest.root_order_id == root_order_id)
-                & (GroupOrderJoinRequest.status == "pending")
+            sa_select(GroupOrderJoinRequestModel).where(
+                (GroupOrderJoinRequestModel.root_order_id == root_order_id)
+                & (GroupOrderJoinRequestModel.status == "pending")
             )
         )
         pending_count = len(pending_count_result.scalars().all())
@@ -276,7 +296,7 @@ async def get_group_order_detail(
 )
 async def join_group(
     root_order_id: str,
-    body: GroupOrderJoinRequest,
+    body: GroupOrderJoinRequestCreate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
