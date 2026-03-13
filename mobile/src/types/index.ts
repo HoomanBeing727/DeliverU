@@ -21,11 +21,38 @@ export interface Order {
   note: string | null;
   orderer_nickname: string;
   deliverer_nickname: string | null;
+  group_order_id: string | null;
+  is_group_open: boolean;
+  participant_count: number;
   created_at: string;
   accepted_at: string | null;
   picked_up_at: string | null;
   delivered_at: string | null;
   cancelled_at: string | null;
+}
+
+export interface GroupOrderResponse {
+  root_order: Order;
+  participants: Order[];
+  total_participants: number;
+  is_open: boolean;
+  my_join_request: GroupOrderJoinRequest | null;
+  pending_join_requests_count: number;
+}
+
+export type JoinRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export interface GroupOrderJoinRequest {
+  id: string;
+  root_order_id: string;
+  requester_id: string;
+  requester_nickname: string;
+  status: JoinRequestStatus;
+  note: string | null;
+  created_at: string;
+  decided_at: string | null;
+  decided_by_user_id: string | null;
+  decision_reason: string | null;
 }
 
 export interface CreditTransaction {
@@ -117,4 +144,9 @@ export type RootStackParamList = {
   MyOrders: undefined;
   MyDeliveries: undefined;
   Leaderboard: { initialTab?: 'orderers' | 'deliverers' } | undefined;
+  LuckyDrawWheel: undefined;
+  USTDash: { orderId: string };
+  GroupOrdersHallBoard: undefined;
+  GroupOrderDetail: { rootOrderId: string };
+  GroupOrderJoin: { rootOrderId: string };
 };
