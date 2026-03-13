@@ -29,10 +29,8 @@ export default function DelivererQueueScreen({ navigation }: Props) {
       return [...orders].sort((a, b) => a.created_at.localeCompare(b.created_at));
     }
 
-    // By Preference
     const prefs = user?.preferred_delivery_halls;
 
-    // Null-safe check: if no prefs, behave like "By Time"
     if (!prefs || prefs.length === 0) {
       return [...orders].sort((a, b) => a.created_at.localeCompare(b.created_at));
     }
@@ -99,7 +97,7 @@ export default function DelivererQueueScreen({ navigation }: Props) {
       <View style={[
         styles.toggleContainer, 
         { 
-          backgroundColor: t.colors.groupedBg, // Using groupedBg for toggle container background 
+          backgroundColor: t.colors.groupedBg,
           borderRadius: t.radius.pill,
           ...t.shadow.subtle 
         }
