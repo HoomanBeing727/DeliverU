@@ -1,18 +1,20 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useTheme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
 import { getDelivererQueue } from '../api/orders';
 import OrderCard from '../components/OrderCard';
+import { OrderListSkeleton } from '../components/SkeletonLoader';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList, Order } from '../types';
+import { hapticSelection } from '../utils/haptics';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'DelivererQueue'>;
-
-export default function DelivererQueueScreen({ navigation }: Props) {
+export default function DelivererQueueScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const t = useTheme();
   const { user } = useAuth();
 
@@ -83,15 +85,16 @@ export default function DelivererQueueScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: t.colors.bg }]}>
-        <ActivityIndicator size="large" color={t.colors.accent} />
+      <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
+        <AppHeader title="Available Orders" />
+        <OrderListSkeleton count={4} />
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { backgroundColor: t.colors.bg }]}>
-      <AppHeader title="Available Orders" onBack={navigation.goBack} />
+      <AppHeader title="Available Orders" />
 
       {/* Sort Toggle */}
       <View style={[
@@ -108,7 +111,7 @@ export default function DelivererQueueScreen({ navigation }: Props) {
             sortMode === 'preference' && { backgroundColor: t.colors.accent },
             { borderRadius: t.radius.pill }
           ]}
-          onPress={() => setSortMode('preference')}
+          onPress={() => { hapticSelection(); setSortMode('preference'); }}
           activeOpacity={0.8}
         >
           <Text
@@ -127,7 +130,7 @@ export default function DelivererQueueScreen({ navigation }: Props) {
             sortMode === 'time' && { backgroundColor: t.colors.accent },
             { borderRadius: t.radius.pill }
           ]}
-          onPress={() => setSortMode('time')}
+          onPress={() => { hapticSelection(); setSortMode('time'); }}
           activeOpacity={0.8}
         >
           <Text
@@ -141,31 +144,36 @@ export default function DelivererQueueScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {sortedOrders.length === 0 ? (
-        <View style={styles.emptyState}>
-          <FontAwesome5 name="inbox" size={48} color={t.colors.muted} style={{ marginBottom: 16 }} />
-          <Text style={[t.typography.callout, { color: t.colors.subtext }]}>
-            No orders available for delivery right now
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={sortedOrders}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <OrderCard
-              order={item}
-              onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
-            />
-          )}
-          contentContainerStyle={styles.list}
-          refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true);
-            loadOrders();
-          }}
-        />
-      )}
+      <FlatList
+        data={sortedOrders}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <OrderCard
+            order={item}
+            variant="deliverer"
+            onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+          />
+        )}
+        contentContainerStyle={sortedOrders.length === 0 ? styles.emptyList : styles.list}
+        refreshing={refreshing}
+        onRefresh={() => {
+          setRefreshing(true);
+          loadOrders();
+        }}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: t.colors.accentLight }]}>
+              <FontAwesome5 name="inbox" size={36} color={t.colors.accent} />
+            </View>
+            <Text style={[t.typography.title3, { color: t.colors.text, marginTop: 20, marginBottom: 8 }]}>
+              No Orders Right Now
+            </Text>
+            <Text style={[t.typography.callout, { color: t.colors.subtext, textAlign: 'center', paddingHorizontal: 32 }]}>
+              New delivery requests from your hall will appear here. Pull down to refresh.
+            </Text>
+          </View>
+        }
+      />
     </View>
   );
 }
@@ -173,11 +181,6 @@ export default function DelivererQueueScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   toggleContainer: {
     flexDirection: 'row',
@@ -195,9 +198,19 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyState: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
 });

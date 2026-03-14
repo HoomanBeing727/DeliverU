@@ -17,6 +17,7 @@ import { createOrder, CreateOrderPayload } from '../api/orders';
 import { RootStackParamList, OrderItem } from '../types';
 import { HKUST_HALLS } from '../constants/dorms';
 import { useTheme } from '../constants/theme';
+import { formatPrice } from '../utils/formatPrice';
 import AppHeader from '../components/AppHeader';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OrderConfirm'>;
@@ -151,7 +152,7 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
         {/* Total Price Section */}
         <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.md, ...t.shadow.card, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
           <Text style={[styles.sectionTitle, t.typography.caption, { color: t.colors.subtext, marginBottom: 0 }]}>Total Price</Text>
-          <Text style={[styles.totalPrice, t.typography.title2, { color: t.colors.accent }]}>${totalPrice.toFixed(1)}</Text>
+          <Text style={[styles.totalPrice, t.typography.title2, { color: t.colors.accent }]}>{formatPrice(totalPrice)}</Text>
         </View>
 
         {/* Delivery Hall Section */}
@@ -240,7 +241,7 @@ export default function OrderConfirmScreen({ navigation, route }: Props) {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.placeOrderText}>Place Order - ${totalPrice.toFixed(1)}</Text>
+            <Text style={styles.placeOrderText}>Place Order - {formatPrice(totalPrice)}</Text>
           )}
         </TouchableOpacity>
       </View>

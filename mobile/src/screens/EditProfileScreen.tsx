@@ -19,6 +19,8 @@ import { useTheme } from '../constants/theme';
 import { setupProfile } from '../api/users';
 import AppHeader from '../components/AppHeader';
 import ChipSelector from '../components/ChipSelector';
+import DropdownPicker from '../components/DropdownPicker';
+import HorizontalChipSelector from '../components/HorizontalChipSelector';
 import RadioGroup from '../components/RadioGroup';
 import {
   HKUST_HALLS,
@@ -144,89 +146,106 @@ export default function EditProfileScreen({ navigation }: Props) {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.labelRow}>
-            <FontAwesome5 name="user" size={14} color={t.colors.accent} style={{ marginRight: 8 }} />
-            <Text style={[styles.label, t.typography.subhead, { color: t.colors.text }]}>Nickname</Text>
-          </View>
-          
-          <View style={[
-            styles.inputContainer, 
-            t.shadow.subtle, 
-            { 
-              borderRadius: t.radius.md, 
-              backgroundColor: t.colors.secondaryBg,
-              borderWidth: 1,
-              borderColor: t.colors.separator
-            }
-          ]}>
-            <TextInput
-              style={[styles.input, { 
-                color: t.colors.text, 
-                backgroundColor: 'transparent'
-              }]}
-              placeholder="Your display name"
-              placeholderTextColor={t.colors.subtext}
-              value={nickname}
-              onChangeText={setNickname}
+          <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.lg }, t.shadow.card]}>
+            <Text style={[t.typography.headline, { color: t.colors.text, marginBottom: t.spacing.md }]}>
+              Basic Info
+            </Text>
+
+            <View style={styles.labelRow}>
+              <FontAwesome5 name="user" size={14} color={t.colors.accent} style={{ marginRight: 8 }} />
+              <Text style={[styles.label, t.typography.subhead, { color: t.colors.text }]}>Nickname</Text>
+            </View>
+            
+            <View style={[
+              styles.inputContainer, 
+              { 
+                borderRadius: t.radius.md, 
+                backgroundColor: t.colors.secondaryBg,
+                borderWidth: 1,
+                borderColor: t.colors.separator
+              }
+            ]}>
+              <TextInput
+                style={[styles.input, { 
+                  color: t.colors.text, 
+                  backgroundColor: 'transparent'
+                }]}
+                placeholder="Your display name"
+                placeholderTextColor={t.colors.subtext}
+                value={nickname}
+                onChangeText={setNickname}
+              />
+            </View>
+
+            <DropdownPicker
+              label="Dorm Hall"
+              options={HKUST_HALLS}
+              selected={dormHall}
+              onSelect={selectDormHall}
+              placeholder="Select your dorm hall"
             />
           </View>
 
-          <ChipSelector
-            label="Dorm Hall"
-            options={HKUST_HALLS}
-            selected={dormHall ? [dormHall] : []}
-            onToggle={selectDormHall}
-            multiple={false}
-          />
+          <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.lg }, t.shadow.card]}>
+            <Text style={[t.typography.headline, { color: t.colors.text, marginBottom: t.spacing.md }]}>
+              Ordering Preferences
+            </Text>
 
-          <ChipSelector
-            label="Usually Order At"
-            options={TIME_SLOTS}
-            selected={orderTimes}
-            onToggle={toggleOrderTime}
-          />
+            <HorizontalChipSelector
+              label="Usually Order At"
+              options={TIME_SLOTS}
+              selected={orderTimes}
+              onToggle={toggleOrderTime}
+            />
 
-          <RadioGroup
-            label="Where do you take orders?"
-            options={TAKE_ORDER_LOCATIONS}
-            selected={takeOrderLocation}
-            onSelect={setTakeOrderLocation}
-          />
+            <RadioGroup
+              label="Where do you take orders?"
+              options={TAKE_ORDER_LOCATIONS}
+              selected={takeOrderLocation}
+              onSelect={setTakeOrderLocation}
+            />
 
-          <RadioGroup
-            label="Delivery Preference"
-            options={DELIVERY_HABITS}
-            selected={deliveryHabit}
-            onSelect={setDeliveryHabit}
-          />
-
-          <View style={styles.switchRow}>
-            <Text style={[styles.switchLabel, t.typography.subhead, { color: t.colors.text }]}>I also want to deliver</Text>
-            <Switch
-              value={isDeliverer}
-              onValueChange={setIsDeliverer}
-              trackColor={{ false: t.colors.secondaryBg, true: t.colors.accent }}
-              thumbColor="#fff"
+            <RadioGroup
+              label="Delivery Preference"
+              options={DELIVERY_HABITS}
+              selected={deliveryHabit}
+              onSelect={setDeliveryHabit}
             />
           </View>
 
-          {isDeliverer && (
-            <>
-              <ChipSelector
-                label="Available Return Times"
-                options={TIME_SLOTS}
-                selected={returnTimes}
-                onToggle={toggleReturnTime}
-              />
+          <View style={[styles.section, { backgroundColor: t.colors.card, borderRadius: t.radius.lg }, t.shadow.card]}>
+            <Text style={[t.typography.headline, { color: t.colors.text, marginBottom: t.spacing.md }]}>
+              Deliverer Settings
+            </Text>
 
-              <ChipSelector
-                label="Preferred Delivery Halls"
-                options={HKUST_HALLS}
-                selected={deliveryHalls}
-                onToggle={toggleDeliveryHall}
+            <View style={styles.switchRow}>
+              <Text style={[styles.switchLabel, t.typography.subhead, { color: t.colors.text }]}>I also want to deliver</Text>
+              <Switch
+                value={isDeliverer}
+                onValueChange={setIsDeliverer}
+                trackColor={{ false: t.colors.secondaryBg, true: t.colors.accent }}
+                thumbColor="#fff"
               />
-            </>
-          )}
+            </View>
+
+            {isDeliverer && (
+              <>
+                <HorizontalChipSelector
+                  label="Available Return Times"
+                  options={TIME_SLOTS}
+                  selected={returnTimes}
+                  onToggle={toggleReturnTime}
+                />
+
+                <ChipSelector
+                  label="Preferred Delivery Halls"
+                  options={HKUST_HALLS}
+                  selected={deliveryHalls}
+                  onToggle={toggleDeliveryHall}
+                />
+              </>
+            )}
+          </View>
 
           <TouchableOpacity
             style={[styles.button, { backgroundColor: t.colors.accent, borderRadius: t.radius.md }, loading && styles.buttonDisabled]}
@@ -249,6 +268,10 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     paddingBottom: 40,
+    gap: 20,
+  },
+  section: {
+    padding: 20,
   },
   labelRow: {
     flexDirection: 'row',

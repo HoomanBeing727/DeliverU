@@ -123,12 +123,20 @@ export interface LeaderboardResponse {
   top_deliverers: LeaderboardEntry[];
 }
 
+export type TabParamList = {
+  HomeTab: undefined;
+  OrdersTab: undefined;
+  DeliverTab: undefined;
+  ProfileTab: undefined;
+};
+
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   ProfileSetup: undefined;
   EditProfile: undefined;
   Dashboard: undefined;
+  MainTabs: undefined;
   CanteenSelect: undefined;
   CanteenWebView: { canteen: string; url: string };
   OrderConfirm: {

@@ -27,6 +27,7 @@ import {
   cancelOrder 
 } from '../api/orders';
 import { useTheme } from '../constants/theme';
+import { formatPrice, formatPriceHK } from '../utils/formatPrice';
 import AppHeader from '../components/AppHeader';
 type Props = NativeStackScreenProps<RootStackParamList, 'OrderDetail'>;
 
@@ -230,71 +231,99 @@ default: return t.colors.subtext;
     });
   };
 
-  const renderTimelineItem = (label: string, date: string | null, index: number, total: number, state: 'completed' | 'active' | 'future' | 'cancelled') => {
-    const isFirst = index === 0;
-    const isLast = index === total - 1;
-    const isActive = state === 'active';
-    const isCompleted = state === 'completed';
-    const isCancelled = state === 'cancelled';
-    const isFuture = state === 'future';
-
-    const dotColor = isCompleted || isActive ? t.colors.success : isCancelled ? t.colors.danger : t.colors.subtext;
-    const lineColor = isCompleted ? t.colors.success : t.colors.subtext;
-
-    let iconName = 'circle';
-    let iconSolid = true; // Default to solid for completed/active/cancelled
-    
-    if (isCompleted) {
-      iconName = 'check-circle';
-      iconSolid = true;
-    } else if (isActive) {
-      iconName = 'circle';
-      iconSolid = true;
-    } else if (isCancelled) {
-      iconName = 'times-circle';
-      iconSolid = true;
-    } else {
-      // Future
-      iconName = 'circle';
-      iconSolid = false; // Regular/Outline
-    }
-
-    return (
-      <View key={label} style={styles.timelineItem}>
-        <View style={{ alignItems: 'center', marginRight: 12, width: 20 }}>
-          {/* Icon Dot */}
-          <Animated.View style={[
-            styles.timelineIconContainer,
-            isActive && { 
-              transform: [{ scale: pulseAnim.interpolate({ inputRange: [0.4, 1], outputRange: [1, 1.2] }) }]
-            }
-          ]}>
-             <FontAwesome5 name={iconName} solid={iconSolid} size={14} color={dotColor} />
-          </Animated.View>
-          
-          {/* Connecting Line (Going Down) */}
-          {!isLast && (
-            <View style={{
-              position: 'absolute',
-              top: 20, 
-              bottom: -20, 
-              width: 2,
-              backgroundColor: lineColor,
-              zIndex: -1
-            }} />
+  const renderProgressStepper = () => {
+    if (order.status === 'cancelled') {
+      return (
+        <View style={styles.stepperCancelled}>
+          <FontAwesome5 name="times-circle" solid size={20} color={t.colors.danger} />
+          <Text style={[t.typography.subhead, { color: t.colors.danger, marginLeft: 8 }]}>
+            Order Cancelled
+          </Text>
+          {order.cancelled_at && (
+            <Text style={[t.typography.caption, { color: t.colors.subtext, marginLeft: 8 }]}>
+              {formatDate(order.cancelled_at)}
+            </Text>
           )}
         </View>
+      );
+    }
 
-        <View style={styles.timelineContent}>
-          <Text style={[
-            styles.timelineLabel, 
-            { color: (isActive || isCompleted) ? t.colors.text : t.colors.subtext },
-            isActive && { fontWeight: 'bold' }
-          ]}>
-            {label}
-          </Text>
-          {date && <Text style={[styles.timelineDate, { color: t.colors.subtext }]}>{formatDate(date)}</Text>}
-        </View>
+    const steps = [
+      { label: 'Created', icon: 'plus-circle', date: order.created_at },
+      { label: 'Accepted', icon: 'handshake', date: order.accepted_at },
+      { label: 'Picked Up', icon: 'box', date: order.picked_up_at },
+      { label: 'Delivered', icon: 'check-circle', date: order.delivered_at },
+    ];
+
+    const statusOrder: OrderStatus[] = ['pending', 'accepted', 'picked_up', 'delivered'];
+    const currentIdx = statusOrder.indexOf(order.status);
+
+    return (
+      <View style={styles.stepperContainer}>
+        {steps.map((step, index) => {
+          const isCompleted = index < currentIdx + 1;
+          const isActive = index === currentIdx;
+          const isFuture = index > currentIdx;
+          const dotColor = isCompleted ? t.colors.success : isFuture ? t.colors.muted : t.colors.success;
+
+          return (
+            <View key={step.label} style={styles.stepperStep}>
+              <View style={styles.stepperDotRow}>
+                {index > 0 && (
+                  <View
+                    style={[
+                      styles.stepperLine,
+                      { backgroundColor: isCompleted ? t.colors.success : t.colors.muted + '40' },
+                    ]}
+                  />
+                )}
+                <Animated.View
+                  style={[
+                    styles.stepperDot,
+                    {
+                      backgroundColor: isCompleted ? t.colors.success : 'transparent',
+                      borderColor: dotColor,
+                      borderWidth: 2,
+                    },
+                    isActive && {
+                      transform: [{ scale: pulseAnim.interpolate({ inputRange: [0.4, 1], outputRange: [1, 1.15] }) }],
+                    },
+                  ]}
+                >
+                  {isCompleted && (
+                    <FontAwesome5 name="check" solid size={10} color="#FFFFFF" />
+                  )}
+                </Animated.View>
+                {index < steps.length - 1 && (
+                  <View
+                    style={[
+                      styles.stepperLine,
+                      { backgroundColor: index < currentIdx ? t.colors.success : t.colors.muted + '40' },
+                    ]}
+                  />
+                )}
+              </View>
+              <Text
+                style={[
+                  t.typography.caption,
+                  {
+                    color: isCompleted || isActive ? t.colors.text : t.colors.subtext,
+                    fontWeight: isActive ? '700' : '400',
+                    marginTop: 6,
+                    textAlign: 'center',
+                  },
+                ]}
+              >
+                {step.label}
+              </Text>
+              {step.date && (
+                <Text style={[t.typography.caption2, { color: t.colors.subtext, marginTop: 2, textAlign: 'center' }]}>
+                  {formatDate(step.date)}
+                </Text>
+              )}
+            </View>
+          );
+        })}
       </View>
     );
   };
@@ -308,7 +337,8 @@ default: return t.colors.subtext;
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Status Banner */}
-        <View style={[styles.statusBanner, { backgroundColor: statusColor + '20' }]}>
+        <View style={[styles.statusBanner, { backgroundColor: statusColor + '18', borderRadius: t.radius.pill }]}>
+          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
           <Text style={[styles.statusBannerText, { color: statusColor }]}>
             {order.status.replace('_', ' ').toUpperCase()}
           </Text>
@@ -329,7 +359,7 @@ default: return t.colors.subtext;
                 <Text style={[styles.itemQty, { color: t.colors.accent }]}>{item.qty}x</Text>
                 <Text style={[styles.itemName, { color: t.colors.text }]}>{item.name}</Text>
               </View>
-              <Text style={[styles.itemPrice, { color: t.colors.text }]}>${item.price}</Text>
+              <Text style={[styles.itemPrice, { color: t.colors.text }]}>{formatPrice(item.price)}</Text>
             </View>
           ))}
 
@@ -337,7 +367,7 @@ default: return t.colors.subtext;
           
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: t.colors.text }]}>Total</Text>
-            <Text style={[styles.totalPrice, { color: t.colors.accent }]}>HK${order.total_price.toFixed(1)}</Text>
+            <Text style={[styles.totalPrice, { color: t.colors.accent }]}>{formatPriceHK(order.total_price)}</Text>
           </View>
         </View>
 
@@ -411,36 +441,9 @@ default: return t.colors.subtext;
         }]}>
           <View style={styles.sectionHeader}>
             <FontAwesome5 name="clock" size={12} color={t.colors.subtext} style={{ marginRight: 6 }} />
-            <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>TIMELINE</Text>
+            <Text style={[styles.sectionTitle, { color: t.colors.subtext, marginBottom: 0 }]}>PROGRESS</Text>
           </View>
-          <View style={styles.timeline}>
-            {(() => {
-              if (order.status === 'cancelled') {
-                return [
-                  renderTimelineItem('Created', order.created_at, 0, 2, 'completed'),
-                  renderTimelineItem('Cancelled', order.cancelled_at, 1, 2, 'cancelled')
-                ];
-              }
-
-              const steps = [
-                { label: 'Created', date: order.created_at },
-                { label: 'Accepted', date: order.accepted_at },
-                { label: 'Picked Up', date: order.picked_up_at },
-                { label: 'Delivered', date: order.delivered_at },
-              ];
-
-              const statusOrder = ['pending', 'accepted', 'picked_up', 'delivered'];
-              const currentStatusIndex = statusOrder.indexOf(order.status);
-
-              return steps.map((step, index) => {
-                let state: 'completed' | 'active' | 'future' = 'future';
-                if (index < currentStatusIndex) state = 'completed';
-                else if (index === currentStatusIndex) state = 'active';
-                
-                return renderTimelineItem(step.label, step.date, index, steps.length, state);
-              });
-            })()}
-          </View>
+          {renderProgressStepper()}
         </View>
 
         {/* Chat Button - Only for accepted/picked_up orders with deliverer */}
@@ -638,14 +641,23 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   statusBanner: {
-    paddingVertical: 12,
-    borderRadius: 8,
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
+    alignSelf: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
   },
   statusBannerText: {
     fontSize: 14,
-    fontWeight: '900',
+    fontWeight: '800',
     letterSpacing: 1,
   },
   card: {
@@ -723,34 +735,38 @@ const styles = StyleSheet.create({
     maxWidth: '60%',
     textAlign: 'right',
   },
-  timeline: {
-    paddingLeft: 8,
-  },
-  timelineItem: {
+  stepperContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 4,
   },
-  timelineDot: {
-    // Removed specific styling as we use icon container now
+  stepperStep: {
+    flex: 1,
+    alignItems: 'center',
   },
-  timelineIconContainer: {
-    width: 20,
-    height: 20,
+  stepperDotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'center',
+  },
+  stepperDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent', 
-    marginBottom: 4, // Spacing from icon to line start if needed, but line is absolute
   },
-  timelineContent: {
+  stepperLine: {
     flex: 1,
+    height: 2,
   },
-  timelineLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timelineDate: {
-    fontSize: 12,
-    marginTop: 2,
+  stepperCancelled: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
   footer: {
     padding: 16,

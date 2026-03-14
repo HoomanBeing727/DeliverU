@@ -4,14 +4,31 @@ export type ThemeMode = 'light' | 'dark';
 
 export const LIGHT_THEME = {
   colors: {
-    // Core
-    bg: '#F2F2F7',
+    // Core (original tokens preserved for backward compat)
+    bg: '#F5F5F7',
     card: '#FFFFFF',
-    text: '#1C1C1E',
-    subtext: '#8E8E93',
+    text: '#1A1A2E',
+    subtext: '#6B7280',
     accent: '#003366',
     accentLight: '#E8EFF7',
     border: '#E5E5EA',
+
+    // New semantic aliases
+    neutralBg: '#F5F5F7',
+    cardBg: '#FFFFFF',
+    textPrimary: '#1A1A2E',
+    textSecondary: '#6B7280',
+    divider: '#E5E7EB',
+    cardBorder: 'transparent',
+
+    // HKUST Gold
+    gold: '#C4A035',
+    goldLight: '#C4A03520',
+
+    // Tab bar
+    tabBar: '#003366',
+    tabBarInactive: '#8E99A4',
+    tabBarActive: '#C4A035',
 
     // Semantic
     danger: '#FF3B30',
@@ -38,7 +55,7 @@ export const LIGHT_THEME = {
     // Surfaces
     secondaryBg: '#E5E5EA',
     tertiaryBg: '#D1D1D6',
-    groupedBg: '#F2F2F7',
+    groupedBg: '#F5F5F7',
     separator: '#C6C6C8',
     overlay: 'rgba(0, 0, 0, 0.4)',
   },
@@ -64,6 +81,8 @@ export const LIGHT_THEME = {
       shadowOpacity: 0.06,
       shadowRadius: 6,
       elevation: 2,
+      borderWidth: 0,
+      borderColor: 'transparent',
     },
     floating: {
       shadowColor: '#000',
@@ -78,20 +97,39 @@ export const LIGHT_THEME = {
       shadowOpacity: 0.04,
       shadowRadius: 3,
       elevation: 1,
+      borderWidth: 0,
+      borderColor: 'transparent',
     },
   },
 };
 
 export const DARK_THEME = {
   colors: {
-    // Core
-    bg: '#000000',
-    card: '#1C1C1E',
+    // Core (backward compat)
+    bg: '#121218',
+    card: '#1C1C24',
     text: '#FFFFFF',
     subtext: '#8E8E93',
-    accent: '#0A84FF',
-    accentLight: '#0A84FF1A',
+    accent: '#4D9FD8',
+    accentLight: '#4D9FD81A',
     border: '#38383A',
+
+    // New semantic aliases
+    neutralBg: '#121218',
+    cardBg: '#1C1C24',
+    textPrimary: '#F0F0F5',
+    textSecondary: '#9CA3AF',
+    divider: '#2A2A35',
+    cardBorder: '#2A2A35',
+
+    // HKUST Gold (brighter for dark mode)
+    gold: '#F2D06B',
+    goldLight: '#F2D06B20',
+
+    // Tab bar
+    tabBar: '#1C1C24',
+    tabBarInactive: '#636366',
+    tabBarActive: '#F2D06B',
 
     // Semantic
     danger: '#FF453A',
@@ -116,9 +154,9 @@ export const DARK_THEME = {
     statusCancelled: '#FF453A',
 
     // Surfaces
-    secondaryBg: '#2C2C2E',
-    tertiaryBg: '#3A3A3C',
-    groupedBg: '#000000',
+    secondaryBg: '#1E1E28',
+    tertiaryBg: '#2A2A35',
+    groupedBg: '#121218',
     separator: '#48484A',
     overlay: 'rgba(0, 0, 0, 0.6)',
   },
@@ -139,25 +177,29 @@ export const DARK_THEME = {
   },
   shadow: {
     card: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
-      elevation: 2,
+      shadowColor: 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
+      borderWidth: 1,
+      borderColor: '#2A2A35',
     },
     floating: {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.4,
+      shadowOpacity: 0.2,
       shadowRadius: 24,
       elevation: 8,
     },
     subtle: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 3,
-      elevation: 1,
+      shadowColor: 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
+      borderWidth: 1,
+      borderColor: '#2A2A35',
     },
   },
 };

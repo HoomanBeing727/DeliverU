@@ -3,13 +3,34 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Order } from '../types';
 import { useTheme } from '../constants/theme';
+import { formatPriceHK } from '../utils/formatPrice';
+import { pluralize } from '../utils/pluralize';
 
 interface Props {
   order: Order;
   onPress: () => void;
+  variant?: 'default' | 'deliverer';
 }
 
-export default function OrderCard({ order, onPress }: Props) {
+function getTimeAgo(dateString: string) {
+  const now = new Date();
+  const date = new Date(dateString);
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " years ago";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " months ago";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " days ago";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " hours ago";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " min ago";
+  return Math.floor(seconds) + " sec ago";
+}
+
+export default function OrderCard({ order, onPress, variant = 'default' }: Props) {
   const t = useTheme();
   const itemCount = order.items.reduce((acc, item) => acc + item.qty, 0);
 
@@ -24,25 +45,67 @@ export default function OrderCard({ order, onPress }: Props) {
     }
   };
 
-  const getTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    let interval = seconds / 31536000;
-    if (interval > 1) return Math.floor(interval) + " years ago";
-    interval = seconds / 2592000;
-    if (interval > 1) return Math.floor(interval) + " months ago";
-    interval = seconds / 86400;
-    if (interval > 1) return Math.floor(interval) + " days ago";
-    interval = seconds / 3600;
-    if (interval > 1) return Math.floor(interval) + " hours ago";
-    interval = seconds / 60;
-    if (interval > 1) return Math.floor(interval) + " min ago";
-    return Math.floor(seconds) + " sec ago";
-  };
-
   const statusColor = getStatusColor(order.status);
+
+  if (variant === 'deliverer') {
+    return (
+      <TouchableOpacity
+        style={[
+          styles.card,
+          {
+            backgroundColor: t.colors.card,
+            borderRadius: t.radius.lg,
+            padding: t.spacing.md,
+            marginVertical: t.spacing.sm,
+            marginHorizontal: t.spacing.xs,
+          },
+          t.shadow.card,
+        ]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.header, { marginBottom: t.spacing.sm }]}>
+          <View style={styles.delivererTitleRow}>
+            <FontAwesome5 name="map-marker-alt" size={16} color={t.colors.accent} style={{ marginRight: 8 }} />
+            <Text style={[t.typography.title3, { color: t.colors.text, flex: 1 }]} numberOfLines={1}>
+              {order.delivery_hall}
+            </Text>
+          </View>
+          <View style={[styles.earnBadge, { backgroundColor: t.colors.goldLight, borderRadius: t.radius.pill }]}>
+            <FontAwesome5 name="coins" size={10} color={t.colors.gold} style={{ marginRight: 4 }} />
+            <Text style={[t.typography.caption2, { color: t.colors.gold, fontWeight: '700' }]}>+1 Credit</Text>
+          </View>
+        </View>
+
+        <View style={[styles.delivererInfoRow, { marginBottom: t.spacing.sm }]}>
+          <View style={[styles.infoPill, { backgroundColor: t.colors.accentLight, borderRadius: t.radius.sm }]}>
+            <FontAwesome5 name="store" size={10} color={t.colors.accent} style={{ marginRight: 4 }} />
+            <Text style={[t.typography.caption, { color: t.colors.accent }]}>{order.canteen}</Text>
+          </View>
+          <View style={[styles.infoPill, { backgroundColor: t.colors.bg, borderRadius: t.radius.sm }]}>
+            <Text style={[t.typography.caption, { color: t.colors.subtext }]}>
+              {pluralize(itemCount, 'item')} · {formatPriceHK(order.total_price)}
+            </Text>
+          </View>
+          {order.is_group_open && (
+            <View style={[styles.infoPill, { backgroundColor: t.colors.purple + '18', borderRadius: t.radius.sm }]}>
+              <FontAwesome5 name="users" size={10} color={t.colors.purple} style={{ marginRight: 4 }} />
+              <Text style={[t.typography.caption, { color: t.colors.purple }]}>
+                {order.participant_count + 1}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={[t.typography.caption, { color: t.colors.subtext }]}>
+            {order.orderer_nickname} · {getTimeAgo(order.created_at)}
+          </Text>
+          <FontAwesome5 name="chevron-right" size={14} color={t.colors.muted} />
+        </View>
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <TouchableOpacity 
@@ -64,8 +127,9 @@ export default function OrderCard({ order, onPress }: Props) {
         <Text style={[styles.canteen, t.typography.title3, { color: t.colors.text, marginRight: t.spacing.sm }]}>
           {order.canteen}
         </Text>
-        <View style={[styles.badge, { backgroundColor: statusColor + '20', borderRadius: t.radius.sm, paddingHorizontal: t.spacing.sm, paddingVertical: t.spacing.xs }]}> 
-          <Text style={[styles.statusText, t.typography.caption2, { color: statusColor, fontWeight: '800' }]}>
+        <View style={[styles.badge, { backgroundColor: statusColor + '18', borderRadius: t.radius.pill, paddingHorizontal: 12, paddingVertical: 4 }]}> 
+          <View style={[styles.badgeDot, { backgroundColor: statusColor }]} />
+          <Text style={[styles.statusText, t.typography.caption2, { color: statusColor, fontWeight: '700' }]}>
             {order.status.replace('_', ' ').toUpperCase()}
           </Text>
         </View>
@@ -78,7 +142,7 @@ export default function OrderCard({ order, onPress }: Props) {
             <Text style={[styles.label, t.typography.body, { color: t.colors.subtext }]}>Items</Text>
           </View>
           <Text style={[styles.value, t.typography.subhead, { color: t.colors.text }]}>
-            {itemCount} item{itemCount !== 1 ? 's' : ''}
+            {pluralize(itemCount, 'item')}
           </Text>
         </View>
         
@@ -88,7 +152,7 @@ export default function OrderCard({ order, onPress }: Props) {
             <Text style={[styles.label, t.typography.body, { color: t.colors.subtext }]}>Total</Text>
           </View>
           <Text style={[styles.price, t.typography.headline, { color: t.colors.accent }]}>
-            HK${order.total_price.toFixed(1)}
+            {formatPriceHK(order.total_price)}
           </Text>
         </View>
 
@@ -109,7 +173,7 @@ export default function OrderCard({ order, onPress }: Props) {
               <Text style={[styles.label, t.typography.body, { color: t.colors.subtext }]}>Group</Text>
             </View>
             <Text style={[styles.value, t.typography.subhead, { color: t.colors.purple }]}>
-              {order.participant_count + 1} participant{order.participant_count !== 0 ? 's' : ''}
+              {pluralize(order.participant_count + 1, 'participant')}
             </Text>
           </View>
         )}
@@ -139,13 +203,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center', // changed from flex-start to align with badge
+    alignItems: 'center',
   },
   canteen: {
     flex: 1,
   },
   badge: {
-    // sizing handled inline
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
   },
   statusText: {
     letterSpacing: 0.5,
@@ -181,5 +252,28 @@ const styles = StyleSheet.create({
   },
   meta: {
     // handled by theme
-  }
+  },
+  delivererTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  earnBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  delivererInfoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  infoPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
 });
