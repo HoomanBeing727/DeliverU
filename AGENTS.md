@@ -1,18 +1,18 @@
-# PROJECT KNOWLEDGE BASE
+# DeliverU — Agent Knowledge Base
 
 **Stack:** React Native (Expo SDK 54, React 19, RN 0.81) + FastAPI (Python 3.10+) + PostgreSQL 16 (async SQLAlchemy + asyncpg)
-**Status:** Auth, Profile, Dashboard, Orders, Credits, Chat, Ratings, QR decode, Leaderboard, Group Orders — all implemented. Escrow pending.
+**Status:** Auth, Profile, Dashboard, Orders, Credits, Chat, Ratings, QR decode, Leaderboard, Group Orders, Lucky Draw — all implemented. Discord bot spec in `docs/` (separate project).
 
 ---
 
-## BUILD & RUN COMMANDS
+## Build & Run Commands
 
 ### Database (PostgreSQL via Docker)
 ```bash
 cd backend
 docker compose up -d              # Start PostgreSQL 16 (port 5432, user: deliveru, pass: deliveru_dev)
 docker compose down               # Stop container
-docker compose down -v            # Stop + delete data (required after schema changes)
+docker compose down -v            # Stop + delete data (REQUIRED after any schema change — no migrations)
 ```
 
 ### Backend (FastAPI)
@@ -21,31 +21,35 @@ cd backend
 python -m venv venv
 venv\Scripts\activate            # Windows  (source venv/bin/activate on macOS/Linux)
 pip install -r requirements.txt
+cp .env.example .env             # Edit DATABASE_URL and JWT_SECRET
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 # Health check: curl http://localhost:8000/health
-# Convenience: start_server.bat (Windows — activates venv + runs uvicorn)
+# Convenience (Windows): start_server.bat  # activates venv + runs uvicorn
 ```
 
 ### Frontend (React Native / Expo)
 ```bash
 cd mobile
 npm install
-npm start                         # Expo Go
+npm start                         # Expo Go (LAN / tunnel)
 npm run android                   # Android emulator
 npm run ios                       # iOS simulator
 npx tsc --noEmit                  # Type-check (ONLY available check)
 ```
 
-### Verification — IMPORTANT
-- **Frontend**: `npx tsc --noEmit` in `mobile/` — the ONLY automated check. Run after ANY TypeScript change.
-- **Backend**: No automated checks (no pytest, ruff, mypy). Manually verify by running the server.
-- **No CI/CD, linting, or test frameworks.** Do NOT invoke `pytest`, `jest`, `ruff`, `eslint`, `prettier` — they don't exist.
+---
+
+## Verification — IMPORTANT
+
+- **Frontend:** `npx tsc --noEmit` in `mobile/` — the ONLY automated check. Run after ANY TypeScript change.
+- **Backend:** No automated checks (no pytest, ruff, mypy). Manually verify by running the server.
+- **No CI/CD, linting, or test frameworks.** Do NOT invoke `pytest`, `jest`, `ruff`, `eslint`, `prettier` — they don't exist here.
 - `backend/test_app.py` and `backend/test_import.py` are ad-hoc debug scripts, NOT test suites.
-- **No Alembic migrations.** Tables auto-created via `Base.metadata.create_all` in the FastAPI lifespan event. Schema changes require `docker compose down -v && docker compose up -d`.
+- **No Alembic migrations.** Tables auto-created via `Base.metadata.create_all` in the FastAPI lifespan event. Any schema change requires `docker compose down -v && docker compose up -d` to recreate tables.
 
 ---
 
-## CODE STYLE & CONVENTIONS
+## Code Style & Conventions
 
 ### Python (Backend)
 
@@ -68,11 +72,13 @@ from models.user import User
 
 **ORM** — SQLAlchemy 2.0 async style. `Mapped[]` + `mapped_column()`. Primary keys are `String` columns with `default=lambda: str(uuid.uuid4())`. JSONB columns for list fields (`order_times`, `preferred_delivery_halls`, `items`). Session uses `expire_on_commit=False`.
 
-**Pydantic** — `BaseModel` for request/response schemas. `field_validator` with `@classmethod`. Response models (only) use `model_config = {"from_attributes": True}`. Settings via `pydantic-settings` `BaseSettings` with `model_config = {"env_file": ".env"}`.
+**Pydantic** — `BaseModel` for request/response schemas. `field_validator` with `@classmethod`. Response models use `model_config = {"from_attributes": True}` (or `ConfigDict(from_attributes=True)`). Settings via `pydantic-settings` `BaseSettings` with `model_config = {"env_file": ".env"}`.
 
 **Router pattern** — `APIRouter(prefix="/resource", tags=["resource"])`. Auth via `Depends(get_current_user)`. DB via `Depends(get_db)`. **Routers commit**: `await db.commit()` + `await db.refresh(obj)` after service calls. Services mutate ORM objects and call `db.flush()` to get generated IDs, but NEVER `db.commit()`.
 
 **Formatting** — 4-space indent. Double blank lines between top-level definitions. Module-level singletons for expensive objects (e.g., `_bearer = HTTPBearer()` in auth_middleware). Triple-quote docstrings for all public functions.
+
+> **Note:** Some router files begin with multiple `# pyright: ...` ignore comments. Do not remove these; they suppress false positives from the static analyzer used by the editor.
 
 ### TypeScript (Frontend)
 
@@ -102,7 +108,8 @@ import { RootStackParamList } from '../types';
 
 ---
 
-## PROJECT STRUCTURE
+## Project Structure
+
 ```
 backend/
   main.py              # FastAPI app, CORS (allow_origins=["*"]), lifespan (auto-creates tables)
@@ -110,6 +117,7 @@ backend/
   database.py          # async engine, async_sessionmaker, DeclarativeBase, get_db dependency
   docker-compose.yml   # PostgreSQL 16 (Alpine) container config
   requirements.txt     # fastapi, uvicorn, sqlalchemy, asyncpg, pydantic, python-jose, passlib, etc.
+  .env.example         # Template for local env vars (DATABASE_URL, JWT_SECRET)
   models/              # SQLAlchemy ORM: User, Order, CreditTransaction, Rating, ChatMessage, GroupOrderJoinRequest
   schemas/             # Pydantic request/response schemas (mirror routers 1:1)
   services/            # Business logic (order, credit, auth, chat, qr, rating — 6 modules)
@@ -118,34 +126,41 @@ backend/
 mobile/src/
   api/                 # Typed Axios client (client.ts) + per-resource modules (10 files)
   context/             # AuthContext.tsx, ToastContext.tsx
-  navigation/          # RootNavigator.tsx: Stack nav with auth gating
-  screens/             # 19 screens: Login, Register, Dashboard, Chat, GroupOrder*, LuckyDraw, etc.
-  components/          # AppHeader, ChipSelector, RadioGroup, OrderCard, StarRating, Toast
+  navigation/          # RootNavigator.tsx: Stack nav with auth gating; TabNavigator.tsx
+  screens/             # 21 screens: Login, Register, Dashboard, Chat, GroupOrder*, LuckyDraw, USTDash, DelivererQueue, etc.
+  components/          # AppHeader, ChipSelector, RadioGroup, OrderCard, StarRating, Toast, SkeletonLoader, DropdownPicker, HorizontalChipSelector
   constants/           # dorms.ts (halls, time slots, locations), theme.ts (light/dark themes)
   types/index.ts       # All TS interfaces: Order, UserProfile, ChatMessage, RootStackParamList
+docs/
+  discord-bot-implementation-plan.md  # Separate Discord bot project (standalone, NOT part of main app)
 ```
 
 ---
 
-## CRITICAL RULES FOR AGENTS
+## Critical Rules for Agents
 
 1. **NO BROKEN CODE** — Run `npx tsc --noEmit` (in `mobile/`) after any TS changes. Backend has no automated checks.
 2. **NO HALLUCINATED TOOLS** — No `pytest`, `ruff`, `jest`, `eslint`, `prettier`. They don't exist here.
 3. **BACKEND ENTRY** — `uvicorn main:app` from `backend/` dir (NOT `app.main:app`).
 4. **DATABASE** — PostgreSQL via Docker. Async SQLAlchemy + asyncpg. Tables auto-created on startup via lifespan.
 5. **AUTH FLOW** — Register/Login -> JWT -> Bearer header -> `get_current_user` dependency.
-6. **NAV FLOW** — No token -> Login/Register. Token + no profile -> ProfileSetup. Profile done -> Dashboard.
+6. **NAV FLOW** — No token -> Login/Register. Token + no profile -> ProfileSetup. Profile done -> Dashboard (MainTabs).
 7. **`.env` SECRETS** — `backend/.env` has dev secrets. Copy from `.env.example`. Never commit secrets.
 8. **COMMIT PATTERN** — Routers do `db.commit()` + `db.refresh()`. Services only mutate + `db.flush()`. Never commit inside a service.
 9. **NEW FEATURE CHECKLIST** — Model (`models/`) -> Schema (`schemas/`) -> Service (`services/`) -> Router (`routers/`, register in `main.py`) -> API module (`mobile/src/api/`) -> Types (`mobile/src/types/index.ts`) -> Screen -> Nav registration.
-10. **GITIGNORE GOTCHA** — Root `.gitignore` ignores `models/` for ML assets. When adding new ORM model files, force-add: `git add -f backend/models/new_file.py`.
 
-## ANTI-PATTERNS TO AVOID
-- **Python**: `from typing import List, Optional` (use `list[str]`, `str | None`). Bare `except:`. Hardcoded config values. Committing DB inside services.
-- **TypeScript**: `any` types. Inline style objects. Mutating state directly. Missing return types on API calls. `@ts-ignore` / `@ts-expect-error`.
-- **Both**: Committing without being asked. Adding dependencies without justification. Suppressing type errors (`as any`, `@ts-ignore`).
+---
 
-## DOMAIN CONCEPTS
+## Anti-Patterns to Avoid
+
+- **Python:** `from typing import List, Optional` (use `list[str]`, `str | None`). Bare `except:`. Hardcoded config values. Committing DB inside services.
+- **TypeScript:** `any` types. Inline style objects. Mutating state directly. Missing return types on API calls. `@ts-ignore` / `@ts-expect-error`.
+- **Both:** Committing without being asked. Adding dependencies without justification. Suppressing type errors (`as any`, `@ts-ignore`).
+
+---
+
+## Domain Concepts
+
 - **Orderer** — Student ordering food. Pays 1 credit per order.
 - **Deliverer** — Student picking up and delivering food. Earns 1 credit per delivery. Same user can be both.
 - **Credits** — In-app currency. Users start with 100. Deducted on order creation, awarded on delivery completion.
